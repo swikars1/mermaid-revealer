@@ -1,0 +1,23 @@
+import { state } from "./state.js";
+import { parseMermaidToSteps } from "./parser.js";
+import { buildNav } from "./nav.js";
+import { selectTopic } from "./render.js";
+
+export function makeTopic(title, source) {
+  const { header, steps } = parseMermaidToSteps(source);
+  if (steps.length === 0) return null;
+  return { title, header, steps, maxSeen: 0 };
+}
+
+export function addTopic(title, source) {
+  const t = makeTopic(title, source);
+  if (!t) {
+    return false;
+  }
+  state.topics.push(t);
+  state.lastAddedTopicIdx = state.topics.length - 1;
+  buildNav();
+  selectTopic(state.topics.length - 1);
+  state.lastAddedTopicIdx = -1;
+  return true;
+}

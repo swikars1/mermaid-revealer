@@ -1,0 +1,2052 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mermaid Reveal — Step Through Any Diagram</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0f0d;
+        --bg-grid: rgba(94, 234, 160, 0.05);
+        --panel: #101815;
+        --panel-raised: #131f1a;
+        --line: #1d2b25;
+        --text: #d9f2e4;
+        --text-dim: #7d9c8c;
+        --text-dimmer: #4f6b5e;
+        --accent: #5eeaa0;
+        --accent-soft: rgba(94, 234, 160, 0.14);
+        --accent-glow: rgba(94, 234, 160, 0.25);
+        --accent-contrast: #06120c;
+        --stage-dot: rgba(94, 234, 160, 0.08);
+        --amber: #ff9a5b;
+        --amber-soft: rgba(255, 154, 91, 0.14);
+        --danger: #ff6b6b;
+        --mono: "IBM Plex Mono", ui-monospace, monospace;
+        --sans: "IBM Plex Sans", system-ui, sans-serif;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.28);
+        --shadow-glow:
+          0 0 0 1px rgba(255, 255, 255, 0.04), 0 12px 40px rgba(0, 0, 0, 0.35);
+      }
+      :root[data-theme="light"] {
+        --bg: #f4f7f4;
+        --bg-grid: rgba(31, 157, 92, 0.06);
+        --panel: #ffffff;
+        --panel-raised: #eef4f0;
+        --line: #dbe4dd;
+        --text: #132019;
+        --text-dim: #51655a;
+        --text-dimmer: #8ea295;
+        --accent: #1f9d5c;
+        --accent-soft: rgba(31, 157, 92, 0.12);
+        --accent-glow: rgba(31, 157, 92, 0.2);
+        --accent-contrast: #ffffff;
+        --stage-dot: rgba(31, 157, 92, 0.07);
+        --amber: #b8601a;
+        --amber-soft: rgba(184, 96, 26, 0.12);
+        --danger: #c2413c;
+        --shadow-soft: 0 8px 32px rgba(19, 32, 25, 0.08);
+        --shadow-glow:
+          0 0 0 1px rgba(19, 32, 25, 0.06), 0 12px 40px rgba(19, 32, 25, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background:
+          linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/100% 28px,
+          linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/28px
+            100%,
+          var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .brand .kicker {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        text-transform: uppercase;
+      }
+      .brand h1 {
+        margin: 0;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 19px;
+      }
+
+      .shell {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 290px 1fr;
+        min-height: 0;
+      }
+
+      /* ---------------- Sidebar / loader ---------------- */
+      nav {
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .loader {
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dropzone {
+        border: 1.5px dashed var(--line);
+        border-radius: 6px;
+        padding: 16px 10px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-dimmer);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .dropzone:hover,
+      .dropzone.drag {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .dropzone b {
+        display: block;
+        color: var(--text-dim);
+        font-size: 12.5px;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      .dropzone.drag b {
+        color: var(--accent);
+      }
+      input[type="file"] {
+        display: none;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 6px;
+      }
+      .mini-btn {
+        flex: 1;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 7px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text-dim);
+        cursor: pointer;
+      }
+      .mini-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
+      .paste-panel {
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px;
+        background: var(--panel-raised);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .paste-panel.open {
+        display: flex;
+      }
+      .paste-panel input,
+      .paste-panel textarea {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 7px 8px;
+        resize: vertical;
+      }
+      .paste-panel textarea {
+        min-height: 90px;
+      }
+      .paste-panel .btn-row button {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .add-confirm {
+        border: 1px solid var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .add-cancel {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text-dimmer);
+      }
+
+      .topic-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0;
+      }
+      .empty-note {
+        padding: 20px 18px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text-dimmer);
+        line-height: 1.6;
+      }
+      .nav-item {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        padding: 10px 12px 10px 10px;
+        margin: 4px 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        font-family: var(--mono);
+        position: relative;
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        user-select: none;
+      }
+      .nav-item:hover {
+        background: var(--panel);
+        border-color: var(--line);
+      }
+      .nav-item:hover .nav-del {
+        opacity: 1;
+      }
+      .nav-item.active {
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+        background: var(--panel-raised);
+        box-shadow:
+          0 0 0 1px var(--accent-soft),
+          inset 3px 0 0 var(--accent);
+      }
+      .nav-item.dragging {
+        opacity: 0.45;
+        transform: scale(0.98);
+      }
+      .nav-item.drag-over-top {
+        box-shadow: inset 0 2px 0 var(--accent);
+      }
+      .nav-item.drag-over-bottom {
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
+      .nav-item.nav-enter {
+        animation: navFadeIn 0.35s ease forwards;
+      }
+      .nav-item.nav-leave {
+        animation: navFadeOut 0.28s ease forwards;
+        pointer-events: none;
+      }
+      @keyframes navFadeIn {
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes navFadeOut {
+        from {
+          opacity: 1;
+          transform: none;
+        }
+        to {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+      }
+      .drag-handle {
+        flex-shrink: 0;
+        width: 14px;
+        padding: 2px 0;
+        color: var(--text-dimmer);
+        cursor: grab;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: -2px;
+        opacity: 0.55;
+        transition:
+          opacity 0.15s ease,
+          color 0.15s ease;
+      }
+      .drag-handle:hover {
+        color: var(--accent);
+        opacity: 1;
+      }
+      .nav-item.dragging .drag-handle {
+        cursor: grabbing;
+      }
+      .nav-num {
+        color: var(--text-dimmer);
+        font-size: 11px;
+        padding-top: 2px;
+        min-width: 20px;
+      }
+      .nav-item.active .nav-num {
+        color: var(--accent);
+      }
+      .nav-label {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.4;
+        word-break: break-word;
+      }
+      .nav-item.active .nav-label {
+        color: var(--text);
+      }
+      .nav-progress {
+        font-size: 9.5px;
+        color: var(--text-dimmer);
+        margin-top: 3px;
+      }
+      .nav-item.done .nav-progress {
+        color: var(--accent);
+      }
+      .nav-del {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        opacity: 0;
+        font-size: 13px;
+        color: var(--text-dimmer);
+        padding: 2px 5px;
+        border-radius: 4px;
+        transition:
+          opacity 0.15s ease,
+          color 0.15s ease,
+          background 0.15s ease;
+      }
+      .nav-del:hover {
+        color: var(--danger);
+        background: rgba(255, 107, 107, 0.1);
+      }
+
+      /* ---------------- Main stage ---------------- */
+      main {
+        padding: 22px 28px 18px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .topic-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 6px;
+      }
+      .topic-head h2 {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .step-tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-dimmer);
+        white-space: nowrap;
+        padding-top: 3px;
+      }
+
+      .stage-wrap {
+        flex: 1;
+        min-height: 300px;
+        position: relative;
+        border: 1px solid color-mix(in srgb, var(--line) 70%, var(--accent));
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background:
+          radial-gradient(
+              circle at 1px 1px,
+              var(--stage-dot) 1px,
+              transparent 0
+            )
+            0 0/24px 24px,
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--panel) 92%, var(--accent)) 0%,
+            var(--panel) 100%
+          );
+        box-shadow: var(--shadow-glow);
+      }
+      .viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+      }
+      .viewport.grabbing {
+        cursor: grabbing;
+      }
+      .canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        display: inline-block;
+        transition:
+          opacity 0.38s ease,
+          filter 0.38s ease;
+      }
+      .canvas.reveal-out {
+        opacity: 0;
+        filter: blur(3px);
+      }
+      .canvas.reveal-in {
+        opacity: 1;
+        filter: none;
+      }
+      @keyframes mmdNodeEnter {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes mmdEdgeEnter {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      /* Opacity-only: these elements carry their own SVG `transform`
+   attribute for positioning, and setting a CSS `transform` (even
+   animating it to `none`) replaces that attribute with an identity
+   matrix instead of deferring to it, which knocks nodes out of place. */
+      .canvas svg .mmd-enter-node {
+        animation: mmdNodeEnter 0.45s ease both;
+      }
+      .canvas svg .mmd-enter-edge {
+        animation: mmdEdgeEnter 0.4s ease both;
+      }
+      .canvas svg {
+        display: block;
+        max-width: none !important;
+        height: auto !important;
+      }
+      .canvas svg .node rect,
+      .canvas svg .node polygon,
+      .canvas svg .node circle,
+      .canvas svg .label-container rect {
+        rx: 10;
+        ry: 10;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
+      }
+      .canvas svg .edgePath .path,
+      .canvas svg .flowchart-link {
+        stroke-width: 2.25px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .canvas svg marker path {
+        stroke-linejoin: round;
+      }
+      .canvas svg .edgeLabel rect {
+        rx: 6;
+        ry: 6;
+        opacity: 0.95;
+      }
+      .placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-dimmer);
+        font-family: var(--mono);
+        font-size: 12px;
+        text-align: center;
+        padding: 20px;
+      }
+      .warn-banner {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        background: var(--amber-soft);
+        border: 1px solid var(--amber);
+        color: var(--amber);
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 7px 10px;
+        border-radius: 4px;
+        z-index: 5;
+      }
+
+      .zoom-controls {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: color-mix(in srgb, var(--panel-raised) 88%, transparent);
+        backdrop-filter: blur(10px);
+        border: 1px solid color-mix(in srgb, var(--line) 80%, var(--accent));
+        border-radius: 999px;
+        padding: 4px 6px;
+        z-index: 4;
+        box-shadow: var(--shadow-soft);
+      }
+      .zoom-controls button {
+        width: 26px;
+        height: 26px;
+        font-family: var(--mono);
+        font-size: 14px;
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .zoom-controls button:hover {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .zoom-pct {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--text-dimmer);
+        min-width: 38px;
+        text-align: center;
+      }
+
+      .hint-corner {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-dimmer);
+        background: var(--panel-raised);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 5px 8px;
+        z-index: 4;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+        transition: justify-content 0.15s ease;
+      }
+      button.ctrl {
+        font-family: var(--mono);
+        font-size: 16px;
+        letter-spacing: 0.03em;
+        width: 42px;
+        height: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      button.ctrl:hover:not(:disabled) {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      button.ctrl:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+      button.ctrl.primary {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      button.ctrl.primary:hover:not(:disabled) {
+        background: var(--accent);
+        color: var(--accent-contrast);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+      button.ctrl {
+        border-radius: var(--radius-sm);
+      }
+
+      .progress-wrap {
+        flex: 1;
+        min-width: 120px;
+        max-width: 280px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .progress-track {
+        flex: 1;
+        height: 5px;
+        background: var(--line);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.2s ease;
+      }
+      .progress-label {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--text-dimmer);
+        white-space: nowrap;
+      }
+
+      .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--text-dimmer);
+      }
+
+      /* ---------------- Full screen ---------------- */
+      main:fullscreen,
+      main:-webkit-full-screen {
+        background: var(--bg);
+        padding: 22px 28px 18px;
+      }
+      body.fake-fullscreen main {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: var(--bg);
+      }
+      body.is-fullscreen .controls {
+        justify-content: center;
+      }
+      body.is-fullscreen .progress-wrap {
+        flex: 0 1 320px;
+      }
+      kbd {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-family: var(--mono);
+      }
+
+      .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 6px 10px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .theme-toggle:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .theme-toggle .icon {
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .color-picker {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+      }
+
+      .color-swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        padding: 0;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .color-swatch:hover {
+        transform: scale(1.12);
+      }
+      .color-swatch.active {
+        border-color: var(--text);
+        box-shadow:
+          0 0 0 2px var(--panel),
+          0 0 0 3px currentColor;
+        transform: scale(1.08);
+      }
+      .color-swatch[data-accent="emerald"] {
+        background: #5eeaa0;
+        color: #5eeaa0;
+      }
+      .color-swatch[data-accent="ocean"] {
+        background: #5eb8ea;
+        color: #5eb8ea;
+      }
+      .color-swatch[data-accent="violet"] {
+        background: #a78bfa;
+        color: #a78bfa;
+      }
+      .color-swatch[data-accent="coral"] {
+        background: #ff9a5b;
+        color: #ff9a5b;
+      }
+      .color-swatch[data-accent="rose"] {
+        background: #f472b6;
+        color: #f472b6;
+      }
+      .color-swatch[data-accent="gold"] {
+        background: #fbbf24;
+        color: #fbbf24;
+      }
+
+      ::-webkit-scrollbar {
+        width: 9px;
+        height: 9px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="kicker">bring your own diagrams</span>
+        <h1>Mermaid Reveal</h1>
+      </div>
+      <div class="header-controls">
+        <div class="color-picker" id="colorPicker" title="Accent color">
+          <button
+            class="color-swatch active"
+            data-accent="emerald"
+            title="Emerald"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="ocean"
+            title="Ocean"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="violet"
+            title="Violet"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="coral"
+            title="Coral"
+          ></button>
+          <button class="color-swatch" data-accent="rose" title="Rose"></button>
+          <button class="color-swatch" data-accent="gold" title="Gold"></button>
+        </div>
+        <button
+          class="theme-toggle"
+          id="themeToggle"
+          title="Toggle light / dark mode"
+        >
+          <span class="icon" id="themeIcon">&#9789;</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav>
+        <div class="loader">
+          <div class="dropzone" id="dropzone">
+            <b>Drop .mmd / .mermaid / .md files</b>
+            or click to browse
+            <input
+              type="file"
+              id="fileInput"
+              multiple
+              accept=".mmd,.mermaid,.txt,.md,.markdown"
+            />
+          </div>
+          <div class="btn-row">
+            <button class="mini-btn" id="pasteToggle">+ Paste diagram</button>
+            <button class="mini-btn" id="clearAll">Clear all</button>
+          </div>
+          <div class="paste-panel" id="pastePanel">
+            <input type="text" id="pasteTitle" placeholder="Diagram title" />
+            <textarea
+              id="pasteText"
+              placeholder="graph TD&#10;A --> B&#10;B --> C"
+            ></textarea>
+            <div class="btn-row">
+              <button class="add-confirm" id="pasteAdd">Add</button>
+              <button class="add-cancel" id="pasteCancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="topic-list" id="topicList"></div>
+      </nav>
+
+      <main>
+        <div class="topic-head">
+          <h2 id="topicTitle">No diagram loaded</h2>
+          <span class="step-tag" id="stepTag">—</span>
+        </div>
+
+        <div class="stage-wrap">
+          <div class="viewport" id="viewport">
+            <div class="canvas" id="canvas"></div>
+          </div>
+          <div class="placeholder" id="placeholder">
+            // nothing to show yet — load a diagram from the left panel
+          </div>
+          <div class="zoom-controls">
+            <button id="zoomOut" title="Zoom out">&minus;</button>
+            <span class="zoom-pct" id="zoomPct">100%</span>
+            <button id="zoomIn" title="Zoom in">&plus;</button>
+            <button id="zoomFit" title="Fit to view">&#8862;</button>
+            <button id="fullscreenBtn" title="Full screen">&#9974;</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="ctrl" id="prevBtn" title="Previous">&larr;</button>
+          <button class="ctrl primary" id="nextBtn" title="Reveal next">&rarr;</button>
+          <div class="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="progress-label" id="progressLabel">0/0</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      /* =========================================================
+   Theme (dark / light) + accent colors
+========================================================= */
+      const ACCENT_PRESETS = {
+        emerald: {
+          dark: {
+            accent: "#5eeaa0",
+            soft: "rgba(94,234,160,0.14)",
+            glow: "rgba(94,234,160,0.25)",
+            grid: "rgba(94,234,160,0.05)",
+            stageDot: "rgba(94,234,160,0.08)",
+            contrast: "#06120c",
+          },
+          light: {
+            accent: "#1f9d5c",
+            soft: "rgba(31,157,92,0.12)",
+            glow: "rgba(31,157,92,0.2)",
+            grid: "rgba(31,157,92,0.06)",
+            stageDot: "rgba(31,157,92,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+        ocean: {
+          dark: {
+            accent: "#5eb8ea",
+            soft: "rgba(94,184,234,0.14)",
+            glow: "rgba(94,184,234,0.25)",
+            grid: "rgba(94,184,234,0.05)",
+            stageDot: "rgba(94,184,234,0.08)",
+            contrast: "#061018",
+          },
+          light: {
+            accent: "#1f7a9d",
+            soft: "rgba(31,122,157,0.12)",
+            glow: "rgba(31,122,157,0.2)",
+            grid: "rgba(31,122,157,0.06)",
+            stageDot: "rgba(31,122,157,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+        violet: {
+          dark: {
+            accent: "#a78bfa",
+            soft: "rgba(167,139,250,0.14)",
+            glow: "rgba(167,139,250,0.25)",
+            grid: "rgba(167,139,250,0.05)",
+            stageDot: "rgba(167,139,250,0.08)",
+            contrast: "#0c0618",
+          },
+          light: {
+            accent: "#7c3aed",
+            soft: "rgba(124,58,237,0.12)",
+            glow: "rgba(124,58,237,0.2)",
+            grid: "rgba(124,58,237,0.06)",
+            stageDot: "rgba(124,58,237,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+        coral: {
+          dark: {
+            accent: "#ff9a5b",
+            soft: "rgba(255,154,91,0.14)",
+            glow: "rgba(255,154,91,0.25)",
+            grid: "rgba(255,154,91,0.05)",
+            stageDot: "rgba(255,154,91,0.08)",
+            contrast: "#180c06",
+          },
+          light: {
+            accent: "#c45f1a",
+            soft: "rgba(196,95,26,0.12)",
+            glow: "rgba(196,95,26,0.2)",
+            grid: "rgba(196,95,26,0.06)",
+            stageDot: "rgba(196,95,26,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+        rose: {
+          dark: {
+            accent: "#f472b6",
+            soft: "rgba(244,114,182,0.14)",
+            glow: "rgba(244,114,182,0.25)",
+            grid: "rgba(244,114,182,0.05)",
+            stageDot: "rgba(244,114,182,0.08)",
+            contrast: "#180610",
+          },
+          light: {
+            accent: "#db2777",
+            soft: "rgba(219,39,119,0.12)",
+            glow: "rgba(219,39,119,0.2)",
+            grid: "rgba(219,39,119,0.06)",
+            stageDot: "rgba(219,39,119,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+        gold: {
+          dark: {
+            accent: "#fbbf24",
+            soft: "rgba(251,191,36,0.14)",
+            glow: "rgba(251,191,36,0.25)",
+            grid: "rgba(251,191,36,0.05)",
+            stageDot: "rgba(251,191,36,0.08)",
+            contrast: "#181006",
+          },
+          light: {
+            accent: "#b8860b",
+            soft: "rgba(184,134,11,0.12)",
+            glow: "rgba(184,134,11,0.2)",
+            grid: "rgba(184,134,11,0.06)",
+            stageDot: "rgba(184,134,11,0.07)",
+            contrast: "#ffffff",
+          },
+        },
+      };
+
+      const THEME_STORAGE_KEY = "mermaid-reveal-theme";
+      const ACCENT_STORAGE_KEY = "mermaid-reveal-accent";
+      let currentTheme = "dark";
+      let currentAccent = "emerald";
+      let topics = [];
+      let currentTopic = -1;
+      let currentStep = 0;
+      let renderToken = 0;
+      let view = { scale: 1, tx: 0, ty: 0 };
+      let hasAutoFitThisTopic = false;
+      let dragNavIdx = null;
+      let lastAddedTopicIdx = -1;
+
+      function hexToRgb(hex) {
+        const h = hex.replace("#", "");
+        return {
+          r: parseInt(h.slice(0, 2), 16),
+          g: parseInt(h.slice(2, 4), 16),
+          b: parseInt(h.slice(4, 6), 16),
+        };
+      }
+
+      function mixHex(baseHex, accentHex, pct) {
+        const b = hexToRgb(baseHex),
+          a = hexToRgb(accentHex);
+        const t = pct / 100;
+        const r = Math.round(b.r + (a.r - b.r) * t);
+        const g = Math.round(b.g + (a.g - b.g) * t);
+        const bl = Math.round(b.b + (a.b - b.b) * t);
+        return `#${[r, g, bl].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+      }
+
+      function buildMermaidThemeVars(theme, accentName) {
+        const preset = ACCENT_PRESETS[accentName] || ACCENT_PRESETS.emerald;
+        const c = preset[theme === "light" ? "light" : "dark"];
+        const isLight = theme === "light";
+        const bg = isLight ? "#ffffff" : "#101815";
+        const primary = isLight
+          ? mixHex("#eaf7ef", c.accent, 35)
+          : mixHex("#132019", c.accent, 8);
+        const secondary = isLight
+          ? mixHex("#eef4f0", c.accent, 18)
+          : mixHex("#1a2620", c.accent, 10);
+        const clusterBorder = isLight
+          ? mixHex("#b9d6c4", c.accent, 40)
+          : mixHex("#3a5548", c.accent, 35);
+        const text = isLight ? "#132019" : "#d9f2e4";
+        return {
+          background: bg,
+          primaryColor: primary,
+          primaryBorderColor: c.accent,
+          primaryTextColor: text,
+          lineColor: c.accent,
+          secondaryColor: secondary,
+          tertiaryColor: bg,
+          edgeLabelBackground: bg,
+          fontFamily: "IBM Plex Mono, monospace",
+          fontSize: "14px",
+          borderRadius: "10px",
+          clusterBkg: isLight
+            ? mixHex("#f4faf6", c.accent, 12)
+            : mixHex("#0d1512", c.accent, 6),
+          clusterBorder: clusterBorder,
+          actorBkg: primary,
+          actorBorder: c.accent,
+          actorTextColor: text,
+          signalColor: c.accent,
+          signalTextColor: text,
+          labelBoxBkgColor: primary,
+          labelBoxBorderColor: c.accent,
+          noteBkgColor: secondary,
+          noteBorderColor: clusterBorder,
+          arrowheadColor: c.accent,
+        };
+      }
+
+      function applyAccentCss(accentName) {
+        const preset = ACCENT_PRESETS[accentName] || ACCENT_PRESETS.emerald;
+        const c = preset[currentTheme === "light" ? "light" : "dark"];
+        const root = document.documentElement.style;
+        root.setProperty("--accent", c.accent);
+        root.setProperty("--accent-soft", c.soft);
+        root.setProperty("--accent-glow", c.glow);
+        root.setProperty("--accent-contrast", c.contrast);
+        root.setProperty("--bg-grid", c.grid);
+        root.setProperty("--stage-dot", c.stageDot);
+        document.querySelectorAll(".color-swatch").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.accent === accentName);
+        });
+      }
+
+      function initMermaidForTheme(theme) {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          themeVariables: buildMermaidThemeVars(theme, currentAccent),
+          flowchart: {
+            curve: "basis",
+            htmlLabels: true,
+            padding: 18,
+            nodeSpacing: 55,
+            rankSpacing: 65,
+            diagramPadding: 12,
+          },
+          sequence: { actorMargin: 60, boxMargin: 10, mirrorActors: false },
+          securityLevel: "loose",
+        });
+      }
+
+      function applyTheme(theme, { persist = true, rerender = true } = {}) {
+        currentTheme = theme === "light" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", currentTheme);
+        document.getElementById("themeIcon").innerHTML =
+          currentTheme === "light" ? "&#9788;" : "&#9789;";
+        document.getElementById("themeLabel").textContent =
+          currentTheme === "light" ? "Light" : "Dark";
+        if (persist) localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+        applyAccentCss(currentAccent);
+        initMermaidForTheme(currentTheme);
+        topics.forEach((t) => {
+          t.fitView = null;
+        });
+        if (rerender && typeof render === "function") render();
+      }
+
+      function applyAccent(
+        accentName,
+        { persist = true, rerender = true } = {},
+      ) {
+        if (!ACCENT_PRESETS[accentName]) return;
+        currentAccent = accentName;
+        if (persist) localStorage.setItem(ACCENT_STORAGE_KEY, currentAccent);
+        applyAccentCss(currentAccent);
+        initMermaidForTheme(currentTheme);
+        topics.forEach((t) => {
+          t.fitView = null;
+        });
+        if (rerender && typeof render === "function") render();
+      }
+
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        applyTheme(currentTheme === "light" ? "dark" : "light");
+      });
+
+      document.getElementById("colorPicker").addEventListener("click", (e) => {
+        const swatch = e.target.closest(".color-swatch");
+        if (!swatch) return;
+        applyAccent(swatch.dataset.accent);
+      });
+
+      (function initTheme() {
+        const saved = localStorage.getItem(THEME_STORAGE_KEY);
+        const savedAccent = localStorage.getItem(ACCENT_STORAGE_KEY);
+        const prefersLight =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: light)").matches;
+        const initial = saved || (prefersLight ? "light" : "dark");
+        currentAccent =
+          savedAccent && ACCENT_PRESETS[savedAccent] ? savedAccent : "emerald";
+        applyTheme(initial, { persist: false, rerender: false });
+      })();
+
+      /* =========================================================
+   Generic mermaid source -> incremental steps parser.
+   Groups nested blocks (subgraph/end, alt/opt/loop/.../end,
+   class braces) into a single atomic reveal step so every
+   intermediate render stays syntactically valid.
+========================================================= */
+      function parseMermaidToSteps(source) {
+        const rawLines = source.replace(/\r\n/g, "\n").split("\n");
+        let idx = 0;
+        while (
+          idx < rawLines.length &&
+          (rawLines[idx].trim() === "" || rawLines[idx].trim().startsWith("%%"))
+        )
+          idx++;
+        const header = rawLines[idx] !== undefined ? rawLines[idx] : "graph TD";
+        const rest = rawLines.slice(idx + 1);
+
+        const steps = [];
+        let buffer = [];
+        let depth = 0;
+        const blockStart =
+          /^(subgraph|alt|opt|loop|par|and|critical|break|rect|state\s+\w+\s*\{?)\b/i;
+
+        for (const line of rest) {
+          const trimmed = line.trim();
+          if (trimmed === "" || trimmed.startsWith("%%")) continue;
+
+          const lower = trimmed.toLowerCase();
+          const opensBrace = /\{\s*$/.test(trimmed) && !trimmed.startsWith("}");
+          const isStart = blockStart.test(lower) || opensBrace;
+          const isEnd = lower === "end" || trimmed === "}";
+
+          if (depth > 0) {
+            buffer.push(line);
+            if (isStart) depth++;
+            if (isEnd) {
+              depth--;
+              if (depth === 0) {
+                steps.push({ add: buffer.slice(), label: buffer[0].trim() });
+                buffer = [];
+              }
+            }
+            continue;
+          }
+
+          if (isStart) {
+            buffer.push(line);
+            depth++;
+            continue;
+          }
+
+          steps.push({ add: [line], label: trimmed });
+        }
+        if (buffer.length)
+          steps.push({ add: buffer.slice(), label: buffer[0].trim() });
+
+        return { header, steps };
+      }
+
+      function extractMermaidBlocksFromMarkdown(text) {
+        const re = /```mermaid\s*\n([\s\S]*?)```/g;
+        const blocks = [];
+        let m;
+        while ((m = re.exec(text)) !== null) blocks.push(m[1].trim());
+        return blocks;
+      }
+
+      /* =========================================================
+   State helpers
+========================================================= */
+      function wait(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      function makeTopic(title, source) {
+        const { header, steps } = parseMermaidToSteps(source);
+        if (steps.length === 0) return null;
+        return { title, header, steps, maxSeen: 0 };
+      }
+
+      function addTopic(title, source) {
+        const t = makeTopic(title, source);
+        if (!t) {
+          return false;
+        }
+        topics.push(t);
+        lastAddedTopicIdx = topics.length - 1;
+        buildNav();
+        selectTopic(topics.length - 1);
+        lastAddedTopicIdx = -1;
+        return true;
+      }
+
+      /* =========================================================
+   Sidebar + drag reorder
+========================================================= */
+      function createNavItem(t, i) {
+        const el = document.createElement("div");
+        el.className = "nav-item";
+        if (i === lastAddedTopicIdx) el.classList.add("nav-enter");
+        el.id = "nav-" + i;
+        el.dataset.idx = String(i);
+        el.innerHTML = `<span class="drag-handle" title="Drag to reorder">&#8942;&#8942;</span>
+    <span class="nav-num">${String(i + 1).padStart(2, "0")}</span>
+    <div style="flex:1; min-width:0;">
+      <div class="nav-label">${escapeHtml(t.title)}</div>
+      <div class="nav-progress" id="prog-${i}"></div>
+    </div>
+    <span class="nav-del" data-idx="${i}" title="Remove">&times;</span>`;
+
+        el.addEventListener("click", (e) => {
+          if (e.target.closest(".nav-del") || e.target.closest(".drag-handle"))
+            return;
+          selectTopic(i);
+        });
+        el.querySelector(".nav-del").addEventListener("click", (e) => {
+          e.stopPropagation();
+          removeTopic(i);
+        });
+
+        const handle = el.querySelector(".drag-handle");
+        handle.addEventListener("mousedown", (e) => e.stopPropagation());
+        handle.addEventListener("click", (e) => e.stopPropagation());
+
+        handle.addEventListener("dragstart", (e) => {
+          dragNavIdx = i;
+          el.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", String(i));
+        });
+        handle.addEventListener("dragend", () => {
+          dragNavIdx = null;
+          el.classList.remove("dragging", "drag-over-top", "drag-over-bottom");
+          document
+            .querySelectorAll(".nav-item")
+            .forEach((n) =>
+              n.classList.remove("drag-over-top", "drag-over-bottom"),
+            );
+        });
+        handle.setAttribute("draggable", "true");
+
+        el.addEventListener("dragover", (e) => {
+          if (dragNavIdx === null) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const rect = el.getBoundingClientRect();
+          const before = e.clientY < rect.top + rect.height / 2;
+          el.classList.toggle("drag-over-top", before);
+          el.classList.toggle("drag-over-bottom", !before);
+        });
+        el.addEventListener("dragleave", () => {
+          el.classList.remove("drag-over-top", "drag-over-bottom");
+        });
+        el.addEventListener("drop", (e) => {
+          e.preventDefault();
+          el.classList.remove("drag-over-top", "drag-over-bottom");
+          const from = dragNavIdx;
+          if (from === null || from === i) return;
+          const rect = el.getBoundingClientRect();
+          let to = e.clientY < rect.top + rect.height / 2 ? i : i + 1;
+          reorderTopic(from, to);
+        });
+
+        return el;
+      }
+
+      function reorderTopic(fromIdx, toIdx) {
+        if (fromIdx === toIdx || fromIdx === toIdx - 1) return;
+        const [item] = topics.splice(fromIdx, 1);
+        if (fromIdx < toIdx) toIdx--;
+        topics.splice(toIdx, 0, item);
+        if (currentTopic === fromIdx) currentTopic = toIdx;
+        else if (fromIdx < currentTopic && toIdx >= currentTopic)
+          currentTopic--;
+        else if (fromIdx > currentTopic && toIdx <= currentTopic)
+          currentTopic++;
+        buildNav();
+        updateNavState();
+      }
+
+      function buildNav() {
+        const list = document.getElementById("topicList");
+        list.innerHTML = "";
+        if (topics.length === 0) {
+          list.innerHTML =
+            '<div class="empty-note">No diagrams loaded yet.<br><br>Drop one or more <b>.mmd</b> files, a <b>.md</b> file containing ```mermaid fences, or use "Paste diagram" above.</div>';
+          return;
+        }
+        topics.forEach((t, i) => list.appendChild(createNavItem(t, i)));
+      }
+
+      function removeTopic(i) {
+        const el = document.getElementById("nav-" + i);
+        if (el) {
+          el.classList.add("nav-leave");
+          setTimeout(() => finishRemoveTopic(i), 260);
+        } else {
+          finishRemoveTopic(i);
+        }
+      }
+
+      function finishRemoveTopic(i) {
+        topics.splice(i, 1);
+        if (topics.length === 0) {
+          currentTopic = -1;
+          buildNav();
+          renderEmpty();
+          return;
+        }
+        if (currentTopic >= topics.length) currentTopic = topics.length - 1;
+        else if (i < currentTopic) currentTopic--;
+        else if (i === currentTopic)
+          currentTopic = Math.min(currentTopic, topics.length - 1);
+        buildNav();
+        selectTopic(currentTopic);
+      }
+
+      function updateNavState() {
+        topics.forEach((t, i) => {
+          const el = document.getElementById("nav-" + i);
+          if (!el) return;
+          el.classList.toggle("active", i === currentTopic);
+          const steps = i === currentTopic ? currentStep : t.maxSeen;
+          const total = t.steps.length;
+          el.classList.toggle("done", steps >= total && steps > 0);
+          document.getElementById("prog-" + i).textContent =
+            steps > 0 ? `${steps}/${total}` : "";
+        });
+      }
+
+      function escapeHtml(s) {
+        return s.replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      /* =========================================================
+   Stable element keys (for detecting which nodes/edges are new
+   between one incremental step and the next, since Mermaid
+   re-lays out the whole graph from scratch on every render).
+========================================================= */
+      function stableKeyFromId(id) {
+        if (!id) return null;
+        return id.replace(/-\d+$/, "");
+      }
+
+      function stableEdgeKey(pathEl) {
+        const cls = pathEl.getAttribute("class") || "";
+        const ls = /\bLS-([\w:.]+)/.exec(cls);
+        const le = /\bLE-([\w:.]+)/.exec(cls);
+        if (ls && le) return "edge:" + ls[1] + "->" + le[1];
+        return pathEl.id ? "edge:" + stableKeyFromId(pathEl.id) : null;
+      }
+
+      function collectRenderKeys(svgEl) {
+        const keys = new Set();
+        svgEl
+          .querySelectorAll(".node[id]")
+          .forEach((n) => keys.add("node:" + stableKeyFromId(n.id)));
+        svgEl
+          .querySelectorAll(".clusters > g[id]")
+          .forEach((n) => keys.add("cluster:" + stableKeyFromId(n.id)));
+        svgEl.querySelectorAll(".edgePaths > path").forEach((p) => {
+          const k = stableEdgeKey(p);
+          if (k) keys.add(k);
+        });
+        return keys;
+      }
+
+      /* Tags only the elements that are new since prevKeys with an
+   entrance animation, staggered slightly so a multi-line step
+   (e.g. a whole subgraph block) reveals node by node instead of
+   popping in as one flat block. Elements that already existed are
+   left untouched so they don't flash/redraw. */
+      function markNewElements(svgEl, prevKeys) {
+        const fresh = [];
+        svgEl.querySelectorAll(".node[id]").forEach((n) => {
+          if (!prevKeys.has("node:" + stableKeyFromId(n.id)))
+            fresh.push([n, "mmd-enter-node"]);
+        });
+        svgEl.querySelectorAll(".clusters > g[id]").forEach((n) => {
+          if (!prevKeys.has("cluster:" + stableKeyFromId(n.id)))
+            fresh.push([n, "mmd-enter-node"]);
+        });
+        svgEl.querySelectorAll(".edgePaths > path").forEach((p) => {
+          const k = stableEdgeKey(p);
+          if (k && !prevKeys.has(k)) fresh.push([p, "mmd-enter-edge"]);
+        });
+        fresh.forEach(([el, cls], i) => {
+          el.classList.add(cls);
+          el.style.animationDelay = Math.min(i * 40, 300) + "ms";
+        });
+      }
+
+      /* Mermaid emits width="100%" with no height, which (since .canvas
+   has no intrinsic width) makes browsers fall back to a default
+   replaced-element size instead of the SVG's real viewBox geometry.
+   That default is unrelated to the scale we compute in ensureTopicFit,
+   so the diagram visibly shrinks as the viewBox grows across steps.
+   Pin width/height to the viewBox so 1 unit == 1px, matching our math. */
+      function normalizeSvgSize(svgEl) {
+        if (!svgEl) return;
+        const vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+        if (vb && vb.width && vb.height) {
+          svgEl.setAttribute("width", vb.width);
+          svgEl.setAttribute("height", vb.height);
+        }
+        svgEl.style.maxWidth = "none";
+      }
+
+      /* =========================================================
+   Render
+========================================================= */
+      function resetView() {
+        view = { scale: 1, tx: 0, ty: 0 };
+        hasAutoFitThisTopic = false;
+      }
+
+      function applyTransform() {
+        document.getElementById("canvas").style.transform =
+          `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+        document.getElementById("zoomPct").textContent =
+          Math.round(view.scale * 100) + "%";
+      }
+
+      function fitToView() {
+        const svg = document.querySelector("#canvas svg");
+        const vp = document.getElementById("viewport");
+        if (!svg) return;
+        let bw, bh;
+        try {
+          const bbox = svg.getBBox();
+          bw = bbox.width;
+          bh = bbox.height;
+        } catch (e) {
+          const r = svg.getBoundingClientRect();
+          bw = r.width;
+          bh = r.height;
+        }
+        if (!bw || !bh) return;
+        const vw = vp.clientWidth,
+          vh = vp.clientHeight;
+        const scale = Math.min(vw / bw, vh / bh, 1.4) * 0.9;
+        view.scale = Math.max(scale, 0.1);
+        view.tx = (vw - bw * view.scale) / 2;
+        view.ty = (vh - bh * view.scale) / 2;
+        applyTransform();
+      }
+
+      /* Compute one fixed scale/pan for a topic, sized to fit its FULLY revealed
+   diagram, so the zoom level doesn't shift as steps are incrementally added. */
+      async function ensureTopicFit(topic) {
+        if (topic.fitView) return topic.fitView;
+        const fullDef = [
+          topic.header,
+          ...topic.steps.flatMap((s) => s.add),
+        ].join("\n");
+        const hidden = document.createElement("div");
+        hidden.style.cssText =
+          "position:absolute; top:-99999px; left:-99999px; visibility:hidden;";
+        document.body.appendChild(hidden);
+        try {
+          const id =
+            "mmd-fit-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
+          const { svg } = await mermaid.render(id, fullDef);
+          hidden.innerHTML = svg;
+          const svgEl = hidden.querySelector("svg");
+          let bw, bh;
+          try {
+            const bbox = svgEl.getBBox();
+            bw = bbox.width;
+            bh = bbox.height;
+          } catch (e) {
+            const r = svgEl.getBoundingClientRect();
+            bw = r.width;
+            bh = r.height;
+          }
+          const vp = document.getElementById("viewport");
+          const vw = vp.clientWidth,
+            vh = vp.clientHeight;
+          if (bw && bh && vw && vh) {
+            const scale = Math.max(Math.min(vw / bw, vh / bh, 1.4) * 0.9, 0.1);
+            topic.fitView = {
+              scale,
+              tx: (vw - bw * scale) / 2,
+              ty: (vh - bh * scale) / 2,
+            };
+          }
+        } catch (e) {
+          console.error("Could not precompute fit for topic", e);
+        } finally {
+          hidden.remove();
+        }
+        return topic.fitView;
+      }
+
+      function renderEmpty() {
+        document.getElementById("topicTitle").textContent = "No diagram loaded";
+        document.getElementById("stepTag").textContent = "—";
+        const cap = document.getElementById("caption");
+        cap.textContent =
+          "Load a .mmd file, drop a .md with mermaid code fences, or paste a diagram to begin.";
+        cap.classList.add("empty");
+        document.getElementById("canvas").innerHTML = "";
+        document.getElementById("placeholder").style.display = "flex";
+        document.getElementById("placeholder").textContent =
+          "// nothing to show yet — load a diagram from the left panel";
+        document.getElementById("prevBtn").disabled = true;
+        document.getElementById("nextBtn").disabled = true;
+        document.getElementById("progressFill").style.width = "0%";
+        document.getElementById("progressLabel").textContent = "0/0";
+      }
+
+      async function render(direction) {
+        if (currentTopic < 0 || !topics[currentTopic]) {
+          renderEmpty();
+          return;
+        }
+        const topic = topics[currentTopic];
+        topic.maxSeen = Math.max(topic.maxSeen, currentStep);
+
+        document.getElementById("topicTitle").textContent = topic.title;
+        document.getElementById("stepTag").textContent =
+          `${currentStep} / ${topic.steps.length}`;
+
+        const hasPrevTopic = currentTopic > 0;
+        const hasNextTopic = currentTopic < topics.length - 1;
+        const done = currentStep >= topic.steps.length;
+
+        const prevBtnEl = document.getElementById("prevBtn");
+        prevBtnEl.disabled = currentStep === 0 && !hasPrevTopic;
+        prevBtnEl.title =
+          currentStep === 0 && hasPrevTopic
+            ? `Previous diagram (${topics[currentTopic - 1].title})`
+            : "Previous step";
+
+        const nextBtnEl = document.getElementById("nextBtn");
+        nextBtnEl.disabled = done && !hasNextTopic;
+        nextBtnEl.title = done
+          ? hasNextTopic
+            ? `Next diagram (${topics[currentTopic + 1].title})`
+            : "Diagram complete"
+          : "Reveal next";
+
+        const pct = topic.steps.length
+          ? Math.round((currentStep / topic.steps.length) * 100)
+          : 0;
+        document.getElementById("progressFill").style.width = pct + "%";
+        document.getElementById("progressLabel").textContent =
+          `${currentStep}/${topic.steps.length}`;
+
+        updateNavState();
+
+        const canvas = document.getElementById("canvas");
+        const placeholder = document.getElementById("placeholder");
+        const stageWrap = document.querySelector(".stage-wrap");
+        const oldWarn = stageWrap.querySelector(".warn-banner");
+        if (oldWarn) oldWarn.remove();
+
+        if (currentStep === 0) {
+          canvas.classList.add("reveal-out");
+          await wait(200);
+          canvas.innerHTML = "";
+          canvas.classList.remove("reveal-out");
+          canvas.classList.add("reveal-in");
+          placeholder.style.display = "flex";
+          placeholder.style.opacity = "0";
+          placeholder.textContent = "// nothing revealed yet";
+          requestAnimationFrame(() => {
+            placeholder.style.transition = "opacity .35s ease";
+            placeholder.style.opacity = "1";
+          });
+          return;
+        }
+        placeholder.style.display = "none";
+
+        const lines = [topic.header];
+        for (let i = 0; i < currentStep; i++) lines.push(...topic.steps[i].add);
+        const def = lines.join("\n");
+
+        const myToken = ++renderToken;
+        const isStep = direction === "forward" || direction === "back";
+        const prevSvgEl = canvas.querySelector("svg");
+        const prevKeys =
+          direction === "forward"
+            ? collectRenderKeys(canvas)
+            : null;
+
+        if (!isStep && prevSvgEl) {
+          // Topic switch / theme change: a full crossfade is fine here,
+          // it's a genuinely different diagram, not an incremental step.
+          canvas.classList.add("reveal-out");
+          await wait(220);
+        }
+
+        if (!hasAutoFitThisTopic) {
+          await ensureTopicFit(topic);
+          if (myToken !== renderToken) return;
+        }
+
+        const id =
+          "mmd-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
+        try {
+          const { svg } = await mermaid.render(id, def);
+          if (myToken !== renderToken) return;
+          canvas.innerHTML = svg;
+          const svgEl = canvas.querySelector("svg");
+          normalizeSvgSize(svgEl);
+          canvas.classList.remove("reveal-out");
+          canvas.classList.add("reveal-in");
+          requestAnimationFrame(() => canvas.classList.remove("reveal-in"));
+          if (prevKeys) markNewElements(svgEl, prevKeys);
+          if (!hasAutoFitThisTopic) {
+            if (topic.fitView) view = { ...topic.fitView };
+            else fitToView();
+            hasAutoFitThisTopic = true;
+            applyTransform();
+          } else {
+            applyTransform();
+          }
+        } catch (e) {
+          if (myToken !== renderToken) return;
+          canvas.classList.remove("reveal-out");
+          const warn = document.createElement("div");
+          warn.className = "warn-banner";
+          warn.textContent =
+            "This step doesn't form valid Mermaid on its own — showing the last valid render.";
+          stageWrap.insertBefore(warn, stageWrap.firstChild.nextSibling);
+          console.error(e, def);
+        }
+      }
+
+      function selectTopic(i) {
+        currentTopic = i;
+        currentStep = 0;
+        resetView();
+        render();
+      }
+
+      /* Crosses from one diagram to the adjacent one (used once the
+   current diagram is fully revealed and Next is pressed again, or
+   Prev is pressed at its very first step). Arriving via Next starts
+   the new diagram from scratch; arriving via Prev shows it already
+   fully revealed, matching the direction you're stepping through it. */
+      function goToAdjacentTopic(delta) {
+        const newIdx = currentTopic + delta;
+        if (newIdx < 0 || newIdx >= topics.length) return;
+        currentTopic = newIdx;
+        currentStep = delta > 0 ? 0 : topics[newIdx].steps.length;
+        resetView();
+        render();
+      }
+
+      /* =========================================================
+   Controls
+========================================================= */
+      document.getElementById("nextBtn").addEventListener("click", () => {
+        if (currentTopic < 0) return;
+        const topic = topics[currentTopic];
+        if (currentStep < topic.steps.length) {
+          currentStep++;
+          render("forward");
+        } else {
+          goToAdjacentTopic(1);
+        }
+      });
+      document.getElementById("prevBtn").addEventListener("click", () => {
+        if (currentStep > 0) {
+          currentStep--;
+          render("back");
+        } else {
+          goToAdjacentTopic(-1);
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName))
+          return;
+        if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
+        if (e.key === "ArrowLeft") document.getElementById("prevBtn").click();
+      });
+
+      /* ---- Zoom / Pan ---- */
+      const viewport = document.getElementById("viewport");
+
+      viewport.addEventListener(
+        "wheel",
+        (e) => {
+          if (!document.querySelector("#canvas svg")) return;
+          e.preventDefault();
+          const rect = viewport.getBoundingClientRect();
+          const mx = e.clientX - rect.left,
+            my = e.clientY - rect.top;
+          const px = (mx - view.tx) / view.scale;
+          const py = (my - view.ty) / view.scale;
+          const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+          const newScale = Math.min(Math.max(view.scale * factor, 0.08), 8);
+          view.tx = mx - px * newScale;
+          view.ty = my - py * newScale;
+          view.scale = newScale;
+          applyTransform();
+        },
+        { passive: false },
+      );
+
+      let panning = false,
+        panStartX = 0,
+        panStartY = 0,
+        panTx0 = 0,
+        panTy0 = 0;
+      viewport.addEventListener("pointerdown", (e) => {
+        if (!document.querySelector("#canvas svg")) return;
+        panning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panTx0 = view.tx;
+        panTy0 = view.ty;
+        viewport.classList.add("grabbing");
+        viewport.setPointerCapture(e.pointerId);
+      });
+      viewport.addEventListener("pointermove", (e) => {
+        if (!panning) return;
+        view.tx = panTx0 + (e.clientX - panStartX);
+        view.ty = panTy0 + (e.clientY - panStartY);
+        applyTransform();
+      });
+      function endPan() {
+        panning = false;
+        viewport.classList.remove("grabbing");
+      }
+      viewport.addEventListener("pointerup", endPan);
+      viewport.addEventListener("pointercancel", endPan);
+      viewport.addEventListener("pointerleave", () => {
+        if (panning) endPan();
+      });
+
+      document
+        .getElementById("zoomIn")
+        .addEventListener("click", () => zoomAtCenter(1.2));
+      document
+        .getElementById("zoomOut")
+        .addEventListener("click", () => zoomAtCenter(1 / 1.2));
+      document.getElementById("zoomFit").addEventListener("click", () => {
+        if (document.querySelector("#canvas svg")) fitToView();
+      });
+
+      /* ---- Full screen ---- */
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      const fullscreenTarget = document.querySelector("main");
+
+      function isFakeFullscreen() {
+        return document.body.classList.contains("fake-fullscreen");
+      }
+
+      async function enterFullscreen() {
+        if (fullscreenTarget.requestFullscreen) {
+          try {
+            await fullscreenTarget.requestFullscreen();
+            return;
+          } catch (e) {
+            /* fall through to CSS-only fullscreen below */
+          }
+        }
+        document.body.classList.add("fake-fullscreen");
+        onFullscreenChange();
+      }
+
+      function exitFullscreenAny() {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+          return;
+        }
+        document.body.classList.remove("fake-fullscreen");
+        onFullscreenChange();
+      }
+
+      async function refitCurrentTopic() {
+        if (currentTopic < 0 || !topics[currentTopic]) return;
+        const topic = topics[currentTopic];
+        topic.fitView = null;
+        hasAutoFitThisTopic = false;
+        if (currentStep > 0 && document.querySelector("#canvas svg")) {
+          await ensureTopicFit(topic);
+          if (topic.fitView) view = { ...topic.fitView };
+          else fitToView();
+          hasAutoFitThisTopic = true;
+          applyTransform();
+        }
+      }
+
+      function onFullscreenChange() {
+        const active = !!document.fullscreenElement || isFakeFullscreen();
+        document.body.classList.toggle("is-fullscreen", active);
+        fullscreenBtn.title = active ? "Exit full screen" : "Full screen";
+        requestAnimationFrame(refitCurrentTopic);
+      }
+
+      fullscreenBtn.addEventListener("click", () => {
+        if (document.fullscreenElement || isFakeFullscreen()) exitFullscreenAny();
+        else enterFullscreen();
+      });
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && isFakeFullscreen()) exitFullscreenAny();
+      });
+
+      function zoomAtCenter(factor) {
+        if (!document.querySelector("#canvas svg")) return;
+        const rect = viewport.getBoundingClientRect();
+        const mx = rect.width / 2,
+          my = rect.height / 2;
+        const px = (mx - view.tx) / view.scale;
+        const py = (my - view.ty) / view.scale;
+        const newScale = Math.min(Math.max(view.scale * factor, 0.08), 8);
+        view.tx = mx - px * newScale;
+        view.ty = my - py * newScale;
+        view.scale = newScale;
+        applyTransform();
+      }
+
+      /* =========================================================
+   File loading
+========================================================= */
+      function readFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      }
+
+      async function handleFiles(fileList) {
+        const files = Array.from(fileList);
+        for (const file of files) {
+          try {
+            const text = await readFile(file);
+            const name = file.name.replace(/\.[^/.]+$/, "");
+            if (/\.(md|markdown)$/i.test(file.name)) {
+              const blocks = extractMermaidBlocksFromMarkdown(text);
+              if (blocks.length === 0) {
+                alert(`No \`\`\`mermaid code fences found in "${file.name}".`);
+                continue;
+              }
+              blocks.forEach((b, i) => {
+                addTopic(blocks.length > 1 ? `${name} (${i + 1})` : name, b);
+              });
+            } else {
+              addTopic(name, text);
+            }
+          } catch (err) {
+            console.error(err);
+            alert(`Couldn't read "${file.name}".`);
+          }
+        }
+      }
+
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("fileInput");
+      dropzone.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = "";
+      });
+      ["dragenter", "dragover"].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropzone.classList.add("drag");
+        }),
+      );
+      ["dragleave", "drop"].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove("drag");
+        }),
+      );
+      dropzone.addEventListener("drop", (e) => {
+        handleFiles(e.dataTransfer.files);
+      });
+
+      /* also allow dropping anywhere on the stage */
+      const stageWrapEl = document.querySelector(".stage-wrap");
+      ["dragenter", "dragover"].forEach((ev) =>
+        stageWrapEl.addEventListener(ev, (e) => e.preventDefault()),
+      );
+      stageWrapEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        handleFiles(e.dataTransfer.files);
+      });
+
+      /* ---- Paste panel ---- */
+      const pastePanel = document.getElementById("pastePanel");
+      document.getElementById("pasteToggle").addEventListener("click", () => {
+        pastePanel.classList.toggle("open");
+      });
+      document.getElementById("pasteCancel").addEventListener("click", () => {
+        pastePanel.classList.remove("open");
+        document.getElementById("pasteTitle").value = "";
+        document.getElementById("pasteText").value = "";
+      });
+      document.getElementById("pasteAdd").addEventListener("click", () => {
+        const title =
+          document.getElementById("pasteTitle").value.trim() ||
+          `Diagram ${topics.length + 1}`;
+        const text = document.getElementById("pasteText").value;
+        if (!text.trim()) {
+          alert("Paste some Mermaid source first.");
+          return;
+        }
+        if (!addTopic(title, text)) {
+          alert("Could not parse any steps from that source.");
+          return;
+        }
+        pastePanel.classList.remove("open");
+        document.getElementById("pasteTitle").value = "";
+        document.getElementById("pasteText").value = "";
+      });
+
+      document.getElementById("clearAll").addEventListener("click", () => {
+        if (topics.length && !confirm("Remove all loaded diagrams?")) return;
+        const items = document.querySelectorAll(".nav-item");
+        if (items.length) {
+          items.forEach((el) => el.classList.add("nav-leave"));
+          setTimeout(() => {
+            topics = [];
+            currentTopic = -1;
+            buildNav();
+            renderEmpty();
+          }, 280);
+        } else {
+          topics = [];
+          currentTopic = -1;
+          buildNav();
+          renderEmpty();
+        }
+      });
+
+      /* =========================================================
+   Starter sample so the tool isn't empty on first open
+========================================================= */
+      addTopic(
+        "Sample: Cache Bridges the Gap",
+        `graph LR
+CPU["CPU Core"]
+CPU -->|"~1ns access"| Cache["Cache: small, fast copy"]
+CPU -.->|"~100ns access"| RAM["Main Memory"]
+Cache <--> RAM`,
+      );
+      addTopic(
+        "Sample: Row vs Column Traversal",
+        `graph TD
+subgraph RowMajor["Row-major (cheap)"]
+R1["Elem 1"] --> R2["Elem 2"] --> R3["Elem 3"]
+R1 -. same cache line .-> R3
+end
+subgraph ColMajor["Column-major (expensive)"]
+C1["Elem 1"] --> C2["Elem 2"] --> C3["Elem 3"]
+C1 -. new cache line .-> C2
+end
+RowMajor --> Result["Same math. ~15x real difference."]
+ColMajor --> Result`,
+      );
+      selectTopic(0);
+      buildNav();
+    </script>
+  </body>
+</html>

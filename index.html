@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mermaid Reveal — Step Through Any Diagram</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="kicker">bring your own diagrams</span>
+        <h1>Mermaid Reveal</h1>
+      </div>
+      <div class="header-controls">
+        <div class="color-picker" id="colorPicker" title="Accent color">
+          <button
+            class="color-swatch active"
+            data-accent="emerald"
+            title="Emerald"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="ocean"
+            title="Ocean"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="violet"
+            title="Violet"
+          ></button>
+          <button
+            class="color-swatch"
+            data-accent="coral"
+            title="Coral"
+          ></button>
+          <button class="color-swatch" data-accent="rose" title="Rose"></button>
+          <button class="color-swatch" data-accent="gold" title="Gold"></button>
+        </div>
+        <button
+          class="theme-toggle"
+          id="themeToggle"
+          title="Toggle light / dark mode"
+        >
+          <span class="icon" id="themeIcon">&#9789;</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav>
+        <div class="loader">
+          <div class="dropzone" id="dropzone">
+            <b>Drop .mmd / .mermaid / .md files</b>
+            or click to browse
+            <input
+              type="file"
+              id="fileInput"
+              multiple
+              accept=".mmd,.mermaid,.txt,.md,.markdown"
+            />
+          </div>
+          <div class="btn-row">
+            <button class="mini-btn" id="pasteToggle">+ Paste diagram</button>
+            <button class="mini-btn" id="clearAll">Clear all</button>
+          </div>
+          <div class="paste-panel" id="pastePanel">
+            <input type="text" id="pasteTitle" placeholder="Diagram title" />
+            <textarea
+              id="pasteText"
+              placeholder="graph TD&#10;A --> B&#10;B --> C"
+            ></textarea>
+            <div class="btn-row">
+              <button class="add-confirm" id="pasteAdd">Add</button>
+              <button class="add-cancel" id="pasteCancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="topic-list" id="topicList"></div>
+      </nav>
+
+      <main>
+        <div class="topic-head">
+          <h2 id="topicTitle">No diagram loaded</h2>
+          <span class="step-tag" id="stepTag">—</span>
+        </div>
+
+        <div class="stage-wrap">
+          <div class="viewport" id="viewport">
+            <div class="canvas" id="canvas"></div>
+          </div>
+          <div class="placeholder" id="placeholder">
+            // nothing to show yet — load a diagram from the left panel
+          </div>
+          <div class="zoom-controls">
+            <button id="zoomOut" title="Zoom out">&minus;</button>
+            <span class="zoom-pct" id="zoomPct">100%</span>
+            <button id="zoomIn" title="Zoom in">&plus;</button>
+            <button id="zoomFit" title="Fit to view">&#8862;</button>
+            <button id="fullscreenBtn" title="Full screen">&#9974;</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="ctrl" id="prevBtn" title="Previous">&larr;</button>
+          <button class="ctrl primary" id="nextBtn" title="Reveal next">&rarr;</button>
+          <div class="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="progress-label" id="progressLabel">0/0</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
