@@ -1,6 +1,22 @@
+import mermaid from "mermaid";
 import { state } from "./state.js";
 import { wait } from "./utils.js";
 import { updateNavState } from "./nav.js";
+
+/* Build the full source for the current prefix, including any leading
+   %%{init}%% directives, which must be re-emitted on every render. */
+function buildDef(topic, stepCount) {
+  const lines = [...(topic.directives ?? []), topic.header];
+  for (let i = 0; i < stepCount; i++) lines.push(...topic.steps[i].add);
+  return lines.join("\n");
+}
+
+function setCaption(text) {
+  const cap = document.getElementById("caption");
+  if (!cap) return; // element is optional; never throw from a render path
+  cap.textContent = text || "";
+  cap.classList.toggle("empty", !text);
+}
 
 /* =========================================================
    Stable element keys (for detecting which nodes/edges are new
@@ -119,9 +135,7 @@ export function fitToView() {
    diagram, so the zoom level doesn't shift as steps are incrementally added. */
 export async function ensureTopicFit(topic) {
   if (topic.fitView) return topic.fitView;
-  const fullDef = [topic.header, ...topic.steps.flatMap((s) => s.add)].join(
-    "\n",
-  );
+  const fullDef = buildDef(topic, topic.steps.length);
   const hidden = document.createElement("div");
   hidden.style.cssText =
     "position:absolute; top:-99999px; left:-99999px; visibility:hidden;";
@@ -164,10 +178,9 @@ export async function ensureTopicFit(topic) {
 export function renderEmpty() {
   document.getElementById("topicTitle").textContent = "No diagram loaded";
   document.getElementById("stepTag").textContent = "—";
-  const cap = document.getElementById("caption");
-  cap.textContent =
-    "Load a .mmd file, drop a .md with mermaid code fences, or paste a diagram to begin.";
-  cap.classList.add("empty");
+  // Previously this threw: #caption did not exist in the DOM, so every call
+  // from "Clear all" / removing the last diagram died here.
+  setCaption("Paste a YouTube URL above to generate diagrams, or drop a .mmd file.");
   document.getElementById("canvas").innerHTML = "";
   document.getElementById("placeholder").style.display = "flex";
   document.getElementById("placeholder").textContent =
@@ -233,6 +246,7 @@ export async function render(direction) {
     placeholder.style.display = "flex";
     placeholder.style.opacity = "0";
     placeholder.textContent = "// nothing revealed yet";
+    setCaption("");
     requestAnimationFrame(() => {
       placeholder.style.transition = "opacity .35s ease";
       placeholder.style.opacity = "1";
@@ -241,9 +255,9 @@ export async function render(direction) {
   }
   placeholder.style.display = "none";
 
-  const lines = [topic.header];
-  for (let i = 0; i < state.currentStep; i++) lines.push(...topic.steps[i].add);
-  const def = lines.join("\n");
+  setCaption(topic.steps[state.currentStep - 1]?.narration);
+
+  const def = buildDef(topic, state.currentStep);
 
   const myToken = ++state.renderToken;
   const isStep = direction === "forward" || direction === "back";
@@ -293,7 +307,40 @@ export async function render(direction) {
   }
 }
 
+/* =========================================================
+   Autoplay — the demo. On first open we play diagram 1 through once with
+   captions, then reset and hand the controls over. docs/ENGINE_CHANGES.md §10
+========================================================= */
+export function stopAutoPlay() {
+  if (state.autoplayTimer) clearInterval(state.autoplayTimer);
+  state.autoplayTimer = null;
+  document.body.classList.remove("autoplaying");
+}
+
+export function startAutoPlay(msPerStep = 2200, { onDone } = {}) {
+  stopAutoPlay();
+  const topic = state.topics[state.currentTopic];
+  if (!topic || topic.steps.length < 2) return;
+  document.body.classList.add("autoplaying");
+  state.autoplayTimer = setInterval(() => {
+    const t = state.topics[state.currentTopic];
+    if (!t || state.currentStep >= t.steps.length) {
+      stopAutoPlay();
+      onDone?.();
+      return;
+    }
+    state.currentStep++;
+    render("forward");
+  }, msPerStep);
+}
+
+export function toggleAutoPlay() {
+  if (state.autoplayTimer) stopAutoPlay();
+  else startAutoPlay();
+}
+
 export function selectTopic(i) {
+  stopAutoPlay();
   state.currentTopic = i;
   const topic = state.topics[i];
   state.currentStep = topic && topic.steps.length > 0 ? 1 : 0;
@@ -309,6 +356,7 @@ export function selectTopic(i) {
 export function goToAdjacentTopic(delta) {
   const newIdx = state.currentTopic + delta;
   if (newIdx < 0 || newIdx >= state.topics.length) return;
+  stopAutoPlay();
   state.currentTopic = newIdx;
   const topic = state.topics[newIdx];
   state.currentStep = delta > 0 ? (topic.steps.length > 0 ? 1 : 0) : topic.steps.length;

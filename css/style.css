@@ -776,3 +776,230 @@ kbd {
   background: var(--line);
   border-radius: 5px;
 }
+
+/* =========================================================
+   Generate panel · recent projects · caption · autoplay
+   Added for the SaaS MVP. Follows the existing token set so the
+   original dark-first terminal aesthetic is untouched.
+========================================================= */
+
+.gen-panel {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-raised);
+  margin-bottom: 14px;
+}
+.gen-panel.disabled { opacity: 0.55; }
+
+.gen-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin-bottom: 8px;
+}
+
+.gen-row { display: flex; gap: 6px; }
+
+.gen-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.gen-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.gen-row input:disabled { opacity: 0.5; }
+
+.gen-btn {
+  padding: 9px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.18s ease, transform 0.12s ease;
+}
+.gen-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.gen-btn:active:not(:disabled) { transform: translateY(1px); }
+.gen-btn:disabled { opacity: 0.6; cursor: progress; }
+
+.gen-status {
+  margin-top: 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+.gen-status.visible { max-height: 100px; opacity: 1; }
+.gen-status.ok { color: var(--accent); }
+.gen-status.warn { color: var(--amber); }
+.gen-status.error { color: var(--danger); }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin: 16px 0 8px;
+}
+
+.recent-list { display: flex; flex-direction: column; gap: 3px; }
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.recent-item:hover { background: var(--panel-raised); color: var(--text); }
+.recent-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-del {
+  opacity: 0;
+  color: var(--text-dimmer);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.recent-item:hover .recent-del { opacity: 1; }
+.recent-del:hover { color: var(--danger); }
+
+.loader-details { margin-top: 16px; }
+.loader-details > summary {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  cursor: pointer;
+  padding: 4px 0;
+  list-style: none;
+}
+.loader-details > summary::-webkit-details-marker { display: none; }
+.loader-details > summary::before { content: "+ "; }
+.loader-details[open] > summary::before { content: "− "; }
+.loader-details > summary:hover { color: var(--text-dim); }
+
+.project-link {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dimmer);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--text-dimmer);
+}
+.project-link:hover { color: var(--accent); border-color: var(--accent); }
+.project-link.hidden { display: none; }
+
+/* Per-step narration. Sized so a two-line caption doesn't shift the canvas. */
+.caption {
+  min-height: 2.9em;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  margin-top: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  transition: opacity 0.2s ease;
+}
+.caption.empty {
+  color: var(--text-dimmer);
+  border-left-color: var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+body.autoplaying #playBtn { color: var(--accent); border-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mmd-enter-node,
+  .mmd-enter-edge { animation: none !important; }
+  .canvas, .caption, .gen-status { transition: none !important; }
+}
+
+/* nav had no padding of its own — the original .loader supplied it. The new
+   direct children (gen panel, section labels, recent list) need it too. */
+nav {
+  padding: 14px;
+  overflow-y: auto;
+  gap: 0;
+}
+nav > .loader { padding: 0; border-bottom: none; }
+.loader-details { border-top: 1px solid var(--line); padding-top: 10px; }
+.topic-list { padding: 0; }
+.topic-list .empty-note { padding: 14px 0; }
+.recent-list .empty-note { padding: 10px 0; }
+
+/* Manual-transcript fallback, shown when YouTube blocks the server. */
+.fallback-panel {
+  display: none;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius-sm);
+}
+.fallback-panel.open { display: flex; }
+.fallback-hint {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.fallback-hint b { color: var(--amber); font-weight: 600; }
+.fallback-panel textarea {
+  min-height: 110px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+}
+.fallback-panel textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}

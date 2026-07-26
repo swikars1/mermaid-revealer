@@ -2,51 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Mermaid Reveal — Step Through Any Diagram</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid Reveal — Turn any YouTube video into step-by-step diagrams</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
     <header>
       <div class="brand">
-        <span class="kicker">bring your own diagrams</span>
+        <span class="kicker">youtube → interactive diagrams</span>
         <h1>Mermaid Reveal</h1>
       </div>
       <div class="header-controls">
         <div class="color-picker" id="colorPicker" title="Accent color">
-          <button
-            class="color-swatch active"
-            data-accent="emerald"
-            title="Emerald"
-          ></button>
-          <button
-            class="color-swatch"
-            data-accent="ocean"
-            title="Ocean"
-          ></button>
-          <button
-            class="color-swatch"
-            data-accent="violet"
-            title="Violet"
-          ></button>
-          <button
-            class="color-swatch"
-            data-accent="coral"
-            title="Coral"
-          ></button>
+          <button class="color-swatch active" data-accent="emerald" title="Emerald"></button>
+          <button class="color-swatch" data-accent="ocean" title="Ocean"></button>
+          <button class="color-swatch" data-accent="violet" title="Violet"></button>
+          <button class="color-swatch" data-accent="coral" title="Coral"></button>
           <button class="color-swatch" data-accent="rose" title="Rose"></button>
           <button class="color-swatch" data-accent="gold" title="Gold"></button>
         </div>
-        <button
-          class="theme-toggle"
-          id="themeToggle"
-          title="Toggle light / dark mode"
-        >
+        <button class="theme-toggle" id="themeToggle" title="Toggle light / dark mode">
           <span class="icon" id="themeIcon">&#9789;</span>
           <span id="themeLabel">Dark</span>
         </button>
@@ -55,39 +35,93 @@
 
     <div class="shell">
       <nav>
-        <div class="loader">
-          <div class="dropzone" id="dropzone">
-            <b>Drop .mmd / .mermaid / .md files</b>
-            or click to browse
+        <!-- ── Generate from YouTube ─────────────────────────────── -->
+        <div class="gen-panel" id="genPanel">
+          <label class="gen-label" for="genUrl">Generate from a video</label>
+          <div class="gen-row">
             <input
-              type="file"
-              id="fileInput"
-              multiple
-              accept=".mmd,.mermaid,.txt,.md,.markdown"
+              type="url"
+              id="genUrl"
+              placeholder="https://youtube.com/watch?v=…"
+              autocomplete="off"
+              spellcheck="false"
             />
+            <button class="gen-btn" id="genBtn">Generate</button>
           </div>
-          <div class="btn-row">
-            <button class="mini-btn" id="pasteToggle">+ Paste diagram</button>
-            <button class="mini-btn" id="clearAll">Clear all</button>
-          </div>
-          <div class="paste-panel" id="pastePanel">
-            <input type="text" id="pasteTitle" placeholder="Diagram title" />
+          <div class="gen-status" id="genStatus" aria-live="polite"></div>
+
+          <!-- Shown when YouTube blocks/rate-limits the server. Pasting the
+               transcript skips fetching entirely and always works. -->
+          <div class="fallback-panel" id="fallbackPanel">
+            <div class="fallback-hint">
+              Open the video → <b>…more</b> → <b>Show transcript</b>, copy it,
+              and paste it here.
+            </div>
             <textarea
-              id="pasteText"
-              placeholder="graph TD&#10;A --> B&#10;B --> C"
+              id="fallbackText"
+              placeholder="Paste the video transcript…"
             ></textarea>
             <div class="btn-row">
-              <button class="add-confirm" id="pasteAdd">Add</button>
-              <button class="add-cancel" id="pasteCancel">Cancel</button>
+              <button class="add-confirm" id="fallbackGo">Generate from this</button>
+              <button class="add-cancel" id="fallbackCancel">Cancel</button>
             </div>
           </div>
+
+          <div class="btn-row">
+            <button class="mini-btn" id="genRegen" title="Ignore the cache and generate fresh">
+              ↻ Regenerate
+            </button>
+            <button class="mini-btn" id="genPaste" title="Skip fetching and paste the transcript">
+              ✎ Paste transcript
+            </button>
+          </div>
         </div>
+
+        <div class="section-label">Recent</div>
+        <div class="recent-list" id="recentList">
+          <div class="empty-note">No generated projects yet.</div>
+        </div>
+
+        <!-- ── Manual load (kept from the original tool) ─────────── -->
+        <details class="loader-details">
+          <summary>Load your own diagram</summary>
+          <div class="loader">
+            <div class="dropzone" id="dropzone">
+              <b>Drop .mmd / .mermaid / .md files</b>
+              or click to browse
+              <input
+                type="file"
+                id="fileInput"
+                multiple
+                accept=".mmd,.mermaid,.txt,.md,.markdown"
+              />
+            </div>
+            <div class="btn-row">
+              <button class="mini-btn" id="pasteToggle">+ Paste diagram</button>
+              <button class="mini-btn" id="clearAll">Clear all</button>
+            </div>
+            <div class="paste-panel" id="pastePanel">
+              <input type="text" id="pasteTitle" placeholder="Diagram title" />
+              <textarea
+                id="pasteText"
+                placeholder="graph TD&#10;A --> B&#10;B --> C"
+              ></textarea>
+              <div class="btn-row">
+                <button class="add-confirm" id="pasteAdd">Add</button>
+                <button class="add-cancel" id="pasteCancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="section-label">Diagrams</div>
         <div class="topic-list" id="topicList"></div>
       </nav>
 
       <main>
         <div class="topic-head">
           <h2 id="topicTitle">No diagram loaded</h2>
+          <a id="projectTitle" class="project-link hidden" target="_blank" rel="noopener"></a>
           <span class="step-tag" id="stepTag">—</span>
         </div>
 
@@ -96,7 +130,7 @@
             <div class="canvas" id="canvas"></div>
           </div>
           <div class="placeholder" id="placeholder">
-            // nothing to show yet — load a diagram from the left panel
+            // paste a YouTube URL on the left to begin
           </div>
           <div class="zoom-controls">
             <button id="zoomOut" title="Zoom out">&minus;</button>
@@ -107,9 +141,14 @@
           </div>
         </div>
 
+        <!-- Per-step narration. This element is what render.js:167 always
+             expected but never had. -->
+        <div class="caption empty" id="caption" aria-live="polite"></div>
+
         <div class="controls">
           <button class="ctrl" id="prevBtn" title="Previous">&larr;</button>
           <button class="ctrl primary" id="nextBtn" title="Reveal next">&rarr;</button>
+          <button class="ctrl" id="playBtn" title="Autoplay (Space)">&#9654;</button>
           <div class="progress-wrap">
             <div class="progress-track">
               <div class="progress-fill" id="progressFill"></div>
@@ -120,6 +159,6 @@
       </main>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="/js/main.js"></script>
   </body>
 </html>
