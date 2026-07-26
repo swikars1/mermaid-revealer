@@ -195,9 +195,9 @@ export async function render(direction) {
   const done = state.currentStep >= topic.steps.length;
 
   const prevBtnEl = document.getElementById("prevBtn");
-  prevBtnEl.disabled = state.currentStep === 0 && !hasPrevTopic;
+  prevBtnEl.disabled = state.currentStep <= 1 && !hasPrevTopic;
   prevBtnEl.title =
-    state.currentStep === 0 && hasPrevTopic
+    state.currentStep <= 1 && hasPrevTopic
       ? `Previous diagram (${state.topics[state.currentTopic - 1].title})`
       : "Previous step";
 
@@ -295,7 +295,8 @@ export async function render(direction) {
 
 export function selectTopic(i) {
   state.currentTopic = i;
-  state.currentStep = 0;
+  const topic = state.topics[i];
+  state.currentStep = topic && topic.steps.length > 0 ? 1 : 0;
   resetView();
   render();
 }
@@ -309,7 +310,8 @@ export function goToAdjacentTopic(delta) {
   const newIdx = state.currentTopic + delta;
   if (newIdx < 0 || newIdx >= state.topics.length) return;
   state.currentTopic = newIdx;
-  state.currentStep = delta > 0 ? 0 : state.topics[newIdx].steps.length;
+  const topic = state.topics[newIdx];
+  state.currentStep = delta > 0 ? (topic.steps.length > 0 ? 1 : 0) : topic.steps.length;
   resetView();
   render();
 }

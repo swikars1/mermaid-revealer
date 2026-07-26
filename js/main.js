@@ -20,7 +20,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
   }
 });
 document.getElementById("prevBtn").addEventListener("click", () => {
-  if (state.currentStep > 0) {
+  if (state.currentStep > 1) {
     state.currentStep--;
     render("back");
   } else {
