@@ -492,9 +492,198 @@ main {
   ry: 6;
   opacity: 0.95;
 }
+/* ---- Annotation layer ---- */
+.anno-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+}
+.viewport.anno-draw .anno-layer,
+.viewport.anno-erase .anno-layer,
+.viewport.anno-move .anno-layer {
+  pointer-events: auto;
+}
+.viewport.anno-draw {
+  cursor: crosshair;
+}
+.viewport.anno-erase {
+  cursor: cell;
+}
+.viewport.anno-move {
+  cursor: default;
+}
+.viewport.anno-move.anno-grab {
+  cursor: move;
+}
+
+/* "auto" ink follows the theme's text colour so it stays legible on
+   both the light and the dark stage. */
+.anno-layer .anno-auto {
+  color: var(--text);
+}
+.anno-layer .anno-selected {
+  filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 4px var(--accent));
+}
+.anno-layer .anno-selbox {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+.anno-layer .anno-marquee {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.anno-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: calc(100% - 210px);
+  background: color-mix(in srgb, var(--panel-raised) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, var(--accent));
+  border-radius: 999px;
+  padding: 5px 10px;
+  z-index: 4;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s ease;
+}
+.anno-bar.armed {
+  border-color: var(--accent);
+}
+.anno-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.anno-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 3px 3px;
+  background: var(--line);
+}
+.anno-bar button {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 7px;
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.anno-bar button svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.anno-bar button:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.anno-tool,
+.anno-act {
+  width: 32px;
+  height: 32px;
+}
+.anno-clear {
+  width: auto;
+  padding: 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.anno-bar button:not(:disabled):hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.anno-tool.active,
+.anno-tool.active:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Swatches carry an inner rim and an outer halo so light inks read on
+   the light stage and dark inks read on the dark one. These are scoped
+   under .anno-bar so they outrank the shared `.anno-bar button`
+   background reset above — otherwise the swatches render as bare rings. */
+.anno-bar .anno-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 60%, #000),
+    0 0 0 1px color-mix(in srgb, var(--text) 30%, transparent);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.anno-bar .anno-color-auto {
+  --ink: var(--text);
+  background: linear-gradient(135deg, #fafafa 0 50%, #1b1b1b 50% 100%);
+}
+.anno-bar .anno-color:not(:disabled):hover {
+  background: var(--ink);
+  transform: scale(1.1);
+}
+.anno-bar .anno-color-auto:not(:disabled):hover,
+.anno-bar .anno-color-auto.active {
+  background: linear-gradient(135deg, #fafafa 0 50%, #1b1b1b 50% 100%);
+}
+.anno-bar .anno-color.active {
+  transform: scale(1.12);
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 60%, #000),
+    0 0 0 2px var(--panel-raised),
+    0 0 0 4px var(--ink);
+}
+.anno-size {
+  width: 26px;
+  height: 26px;
+}
+.anno-size span {
+  display: block;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+.anno-size.active {
+  background: var(--accent-soft);
+}
+.anno-size.active span {
+  background: var(--accent);
+}
+.anno-count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-dimmer);
+  white-space: nowrap;
+  padding-left: 2px;
+}
+
+@media (max-width: 1100px) {
+  .anno-bar {
+    max-width: calc(100% - 24px);
+    bottom: 54px;
+  }
+}
+
 .placeholder {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;

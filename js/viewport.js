@@ -1,5 +1,6 @@
 import { state } from "./state.js";
 import { applyTransform, fitToView, ensureTopicFit } from "./render.js";
+import { isToolArmed } from "./annotate.js";
 
 /* =========================================================
    Zoom / Pan / Full screen
@@ -66,6 +67,9 @@ export function initViewportControls() {
     panTy0 = 0;
   viewport.addEventListener("pointerdown", (e) => {
     if (!document.querySelector("#canvas svg")) return;
+    // While a drawing tool is armed, left-drag draws; middle/right-drag
+    // still pans so you never have to disarm just to move around.
+    if (isToolArmed() && e.button === 0) return;
     panning = true;
     panStartX = e.clientX;
     panStartY = e.clientY;
@@ -139,6 +143,9 @@ export function initViewportControls() {
   });
   document.addEventListener("fullscreenchange", onFullscreenChange);
   document.addEventListener("keydown", (e) => {
+    // Escape disarms the drawing tool first (handled in annotate.js);
+    // only fall through to leaving full screen once nothing is armed.
+    if (isToolArmed()) return;
     if (e.key === "Escape" && isFakeFullscreen()) exitFullscreenAny();
   });
 }

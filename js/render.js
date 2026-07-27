@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { wait } from "./utils.js";
 import { updateNavState } from "./nav.js";
+import { syncAnnoTransform, resetAnnotationView } from "./annotate.js";
 
 /* =========================================================
    Stable element keys (for detecting which nodes/edges are new
@@ -89,6 +90,7 @@ export function applyTransform() {
     `translate(${state.view.tx}px, ${state.view.ty}px) scale(${state.view.scale})`;
   document.getElementById("zoomPct").textContent =
     Math.round(state.view.scale * 100) + "%";
+  syncAnnoTransform();
 }
 
 export function fitToView() {
@@ -165,10 +167,13 @@ export function renderEmpty() {
   document.getElementById("topicTitle").textContent = "No diagram loaded";
   document.getElementById("stepTag").textContent = "—";
   const cap = document.getElementById("caption");
-  cap.textContent =
-    "Load a .mmd file, drop a .md with mermaid code fences, or paste a diagram to begin.";
-  cap.classList.add("empty");
+  if (cap) {
+    cap.textContent =
+      "Load a .mmd file, drop a .md with mermaid code fences, or paste a diagram to begin.";
+    cap.classList.add("empty");
+  }
   document.getElementById("canvas").innerHTML = "";
+  resetAnnotationView();
   document.getElementById("placeholder").style.display = "flex";
   document.getElementById("placeholder").textContent =
     "// nothing to show yet — load a diagram from the left panel";
@@ -298,6 +303,7 @@ export function selectTopic(i) {
   const topic = state.topics[i];
   state.currentStep = topic && topic.steps.length > 0 ? 1 : 0;
   resetView();
+  resetAnnotationView();
   render();
 }
 
@@ -313,5 +319,6 @@ export function goToAdjacentTopic(delta) {
   const topic = state.topics[newIdx];
   state.currentStep = delta > 0 ? (topic.steps.length > 0 ? 1 : 0) : topic.steps.length;
   resetView();
+  resetAnnotationView();
   render();
 }

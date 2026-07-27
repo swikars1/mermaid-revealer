@@ -5,6 +5,7 @@ import { buildNav } from "./nav.js";
 import { addTopic } from "./topics.js";
 import { initViewportControls } from "./viewport.js";
 import { initFileLoader } from "./fileLoader.js";
+import { initAnnotate } from "./annotate.js";
 
 /* =========================================================
    Controls
@@ -34,8 +35,11 @@ document.addEventListener("keydown", (e) => {
 });
 
 initThemeUI();
+// initAnnotate() must come after initViewportControls() so the viewport's
+// Escape handler runs first and can see that a drawing tool is still armed.
 initViewportControls();
 initFileLoader();
+initAnnotate();
 
 /* =========================================================
    Starter sample so the tool isn't empty on first open

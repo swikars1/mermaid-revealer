@@ -6,7 +6,16 @@ import { selectTopic } from "./render.js";
 export function makeTopic(title, source) {
   const { header, steps } = parseMermaidToSteps(source);
   if (steps.length === 0) return null;
-  return { title, header, steps, maxSeen: 0 };
+  return {
+    title,
+    header,
+    steps,
+    maxSeen: 0,
+    // Annotations are per-diagram and never shared between topics.
+    annotations: [],
+    annoUndo: [],
+    annoRedo: [],
+  };
 }
 
 export function addTopic(title, source) {

@@ -94,10 +94,25 @@
         <div class="stage-wrap">
           <div class="viewport" id="viewport">
             <div class="canvas" id="canvas"></div>
+            <svg class="anno-layer" id="annoLayer">
+              <g id="annoRoot"></g>
+            </svg>
           </div>
           <div class="placeholder" id="placeholder">
             // nothing to show yet — load a diagram from the left panel
           </div>
+
+          <div class="anno-bar" id="annoBar">
+            <div class="anno-group" id="annoTools"></div>
+            <span class="anno-sep"></span>
+            <div class="anno-group" id="annoColors"></div>
+            <span class="anno-sep"></span>
+            <div class="anno-group" id="annoSizes"></div>
+            <span class="anno-sep"></span>
+            <div class="anno-group" id="annoActs"></div>
+            <span class="anno-count" id="annoCount"></span>
+          </div>
+
           <div class="zoom-controls">
             <button id="zoomOut" title="Zoom out">&minus;</button>
             <span class="zoom-pct" id="zoomPct">100%</span>
