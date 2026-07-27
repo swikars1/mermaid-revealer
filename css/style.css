@@ -455,6 +455,15 @@ main {
     opacity: 1;
   }
 }
+/* Marches the dash pattern from an edge's start toward its end. Mermaid
+   draws edge paths from source to target and puts the arrowhead marker
+   at the end, so a decreasing (more negative) offset reads as flow
+   toward the arrowhead rather than away from it. */
+@keyframes mmdEdgeFlow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
 /* Opacity-only: these elements carry their own SVG `transform`
    attribute for positioning, and setting a CSS `transform` (even
    animating it to `none`) replaces that attribute with an identity
@@ -464,6 +473,23 @@ main {
 }
 .canvas svg .mmd-enter-edge {
   animation: mmdEdgeEnter 0.4s ease both;
+}
+/* A freshly-revealed edge needs both the fade-in AND the flow — a
+   second rule just for entrance would replace the animation shorthand
+   instead of adding to it, so both are listed together for elements
+   that carry both classes at once. */
+.canvas svg .flowchart-link.mmd-enter-edge {
+  animation:
+    mmdEdgeEnter 0.4s ease both,
+    mmdEdgeFlow 0.9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas svg .flowchart-link,
+  .canvas svg .mmd-enter-node,
+  .canvas svg .mmd-enter-edge {
+    animation: none !important;
+    opacity: 1;
+  }
 }
 .canvas svg {
   display: block;
@@ -483,6 +509,13 @@ main {
   stroke-width: 2.25px;
   stroke-linecap: round;
   stroke-linejoin: round;
+  /* Mermaid sets its own stroke-dasharray for these edges — inline on
+     dashed/dotted paths, or via an ID-scoped rule for solid ones
+     (`stroke-dasharray: 0`, i.e. no dashes to animate at all). Both
+     outrank a plain class selector, so !important is the only way to
+     force one flowing dash pattern across every edge style. */
+  stroke-dasharray: 8 6 !important;
+  animation: mmdEdgeFlow 0.9s linear infinite;
 }
 .canvas svg marker path {
   stroke-linejoin: round;
