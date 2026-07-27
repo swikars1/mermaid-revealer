@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { escapeHtml } from "./utils.js";
 import { selectTopic, renderEmpty } from "./render.js";
+import { scheduleSave } from "./persist.js";
 
 /* =========================================================
    Sidebar + drag reorder
@@ -85,6 +86,7 @@ export function reorderTopic(fromIdx, toIdx) {
     state.currentTopic++;
   buildNav();
   updateNavState();
+  scheduleSave();
 }
 
 export function buildNav() {

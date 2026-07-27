@@ -1,4 +1,5 @@
 import { state, ANNOTATE_STORAGE_KEY } from "./state.js";
+import { scheduleSave } from "./persist.js";
 
 /* =========================================================
    Freehand annotation layer
@@ -263,6 +264,7 @@ export function refreshAnnotations() {
   liveStroke = null;
   livePath = null;
   updateAnnoBar();
+  scheduleSave();
 }
 
 /* Drops the selection too — used when the displayed diagram changes. */
@@ -642,6 +644,10 @@ function endGesture() {
     marquee = null;
     updateAnnoBar();
   }
+  // Covers the two paths above that skip refreshAnnotations for perf
+  // (a completed draw stroke, a completed move drag) — refreshAnnotations
+  // itself already schedules a save for every other mutation.
+  scheduleSave();
 }
 
 /* =========================================================

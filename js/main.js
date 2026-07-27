@@ -5,7 +5,8 @@ import { buildNav } from "./nav.js";
 import { addTopic } from "./topics.js";
 import { initViewportControls } from "./viewport.js";
 import { initFileLoader } from "./fileLoader.js";
-import { initAnnotate } from "./annotate.js";
+import { initAnnotate, refreshAnnotations } from "./annotate.js";
+import { loadLibrary } from "./persist.js";
 
 /* =========================================================
    Controls
@@ -42,19 +43,30 @@ initFileLoader();
 initAnnotate();
 
 /* =========================================================
-   Starter sample so the tool isn't empty on first open
+   Restore whatever was loaded last time (diagrams + annotations),
+   or fall back to a starter sample so the tool isn't empty on
+   first open.
 ========================================================= */
-addTopic(
-  "Sample: Cache Bridges the Gap",
-  `graph LR
+if (loadLibrary()) {
+  buildNav();
+  render();
+  // render() doesn't touch the annotation layer on its own — it's only
+  // repainted on topic switches (via resetAnnotationView) or edits. On
+  // a fresh load there's been neither, so the restored strokes need an
+  // explicit first paint.
+  refreshAnnotations();
+} else {
+  addTopic(
+    "Sample: Cache Bridges the Gap",
+    `graph LR
 CPU["CPU Core"]
 CPU -->|"~1ns access"| Cache["Cache: small, fast copy"]
 CPU -.->|"~100ns access"| RAM["Main Memory"]
 Cache <--> RAM`,
-);
-addTopic(
-  "Sample: Row vs Column Traversal",
-  `graph TD
+  );
+  addTopic(
+    "Sample: Row vs Column Traversal",
+    `graph TD
 subgraph RowMajor["Row-major (cheap)"]
 R1["Elem 1"] --> R2["Elem 2"] --> R3["Elem 3"]
 R1 -. same cache line .-> R3
@@ -65,6 +77,7 @@ C1 -. new cache line .-> C2
 end
 RowMajor --> Result["Same math. ~15x real difference."]
 ColMajor --> Result`,
-);
-selectTopic(0);
-buildNav();
+  );
+  selectTopic(0);
+  buildNav();
+}

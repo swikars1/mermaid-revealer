@@ -8,6 +8,9 @@ export function makeTopic(title, source) {
   if (steps.length === 0) return null;
   return {
     title,
+    // Raw source is kept alongside the derived header/steps so the
+    // topic can be serialized to localStorage and rebuilt on reload.
+    source,
     header,
     steps,
     maxSeen: 0,

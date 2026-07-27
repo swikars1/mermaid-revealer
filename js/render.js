@@ -2,6 +2,7 @@ import { state } from "./state.js";
 import { wait } from "./utils.js";
 import { updateNavState } from "./nav.js";
 import { syncAnnoTransform, resetAnnotationView } from "./annotate.js";
+import { scheduleSave } from "./persist.js";
 
 /* =========================================================
    Stable element keys (for detecting which nodes/edges are new
@@ -190,6 +191,7 @@ export async function render(direction) {
   }
   const topic = state.topics[state.currentTopic];
   topic.maxSeen = Math.max(topic.maxSeen, state.currentStep);
+  scheduleSave();
 
   document.getElementById("topicTitle").textContent = topic.title;
   document.getElementById("stepTag").textContent =
