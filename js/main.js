@@ -6,6 +6,9 @@ import { addTopic } from "./topics.js";
 import { initViewportControls } from "./viewport.js";
 import { initFileLoader } from "./fileLoader.js";
 import { initAnnotate, refreshAnnotations } from "./annotate.js";
+import { initHighlight } from "./highlight.js";
+import { initEditor } from "./editor.js";
+import { initExport } from "./export.js";
 import { loadLibrary } from "./persist.js";
 
 /* =========================================================
@@ -41,6 +44,9 @@ initThemeUI();
 initViewportControls();
 initFileLoader();
 initAnnotate();
+initHighlight();
+initEditor();
+initExport();
 
 /* =========================================================
    Restore whatever was loaded last time (diagrams + annotations),

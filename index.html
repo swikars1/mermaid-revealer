@@ -89,6 +89,24 @@
         <div class="topic-head">
           <h2 id="topicTitle">No diagram loaded</h2>
           <span class="step-tag" id="stepTag">—</span>
+          <div class="head-actions">
+            <button class="head-btn" id="editBtn" title="Edit Mermaid source">
+              edit
+            </button>
+            <div class="export-wrap">
+              <button
+                class="head-btn"
+                id="exportBtn"
+                title="Export diagram with annotations"
+              >
+                export
+              </button>
+              <div class="export-menu" id="exportMenu">
+                <button data-format="svg">as SVG</button>
+                <button data-format="png">as PNG</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="stage-wrap">
@@ -133,6 +151,25 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <div class="modal-backdrop" id="editModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Edit diagram">
+        <div class="modal-head">
+          <h3>Edit diagram</h3>
+          <button class="modal-x" id="editClose" title="Close">&times;</button>
+        </div>
+        <label class="modal-label" for="editTitle">Title</label>
+        <input type="text" id="editTitle" placeholder="Diagram title" />
+        <label class="modal-label" for="editSource">Mermaid source</label>
+        <textarea id="editSource" spellcheck="false"></textarea>
+        <div class="modal-err" id="editErr" hidden></div>
+        <div class="modal-foot">
+          <span class="modal-hint">Cmd/Ctrl + Enter to save</span>
+          <button class="add-cancel" id="editCancel">Cancel</button>
+          <button class="add-confirm" id="editSave">Save</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="js/main.js"></script>

@@ -248,7 +248,8 @@ input[type="file"] {
   background: var(--panel);
   border-color: var(--line);
 }
-.nav-item:hover .nav-del {
+.nav-item:hover .nav-del,
+.nav-item:hover .nav-edit {
   opacity: 1;
 }
 .nav-item.active {
@@ -342,23 +343,35 @@ input[type="file"] {
 .nav-item.done .nav-progress {
   color: var(--accent);
 }
-.nav-del {
+.nav-del,
+.nav-edit {
   position: absolute;
-  right: 8px;
   top: 8px;
   opacity: 0;
   font-size: 13px;
   color: var(--text-dimmer);
   padding: 2px 5px;
   border-radius: 4px;
+  cursor: pointer;
   transition:
     opacity 0.15s ease,
     color 0.15s ease,
     background 0.15s ease;
 }
+.nav-del {
+  right: 8px;
+}
+.nav-edit {
+  right: 30px;
+  font-size: 12px;
+}
 .nav-del:hover {
   color: var(--danger);
   background: rgba(255, 107, 107, 0.1);
+}
+.nav-edit:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* ---------------- Main stage ---------------- */
@@ -388,6 +401,194 @@ main {
   color: var(--text-dimmer);
   white-space: nowrap;
   padding-top: 3px;
+}
+.topic-head h2 {
+  flex: 1;
+  min-width: 0;
+}
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.head-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel-raised);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.head-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.head-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ---- Export menu ---- */
+.export-wrap {
+  position: relative;
+}
+.export-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  z-index: 30;
+  flex-direction: column;
+  min-width: 108px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-soft);
+}
+.export-menu.open {
+  display: flex;
+}
+.export-menu button {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: left;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.export-menu button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---- Edit modal ---- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+.modal-backdrop[hidden] {
+  display: none;
+}
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: min(760px, 100%);
+  max-height: 100%;
+  padding: 18px 20px 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, var(--accent));
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-glow);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-head h3 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+.modal-x {
+  border: none;
+  background: transparent;
+  color: var(--text-dimmer);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.modal-x:hover {
+  color: var(--danger);
+}
+.modal-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin-top: 3px;
+}
+.modal input,
+.modal textarea {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+.modal input:focus,
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.modal textarea {
+  min-height: 240px;
+  flex: 1;
+  resize: vertical;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.modal-err {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--danger);
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 5px;
+  padding: 7px 9px;
+}
+.modal-err[hidden] {
+  display: none;
+}
+.modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.modal-hint {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dimmer);
+}
+.modal-foot button {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .stage-wrap {
@@ -503,6 +704,42 @@ main {
   rx: 10;
   ry: 10;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
+}
+
+/* ---- Click-to-highlight ---- */
+/* Nodes are clickable only when no drawing tool is armed — otherwise the
+   annotation layer is on top and owns the pointer. */
+.viewport:not(.anno-draw):not(.anno-erase):not(.anno-move) .canvas svg .node {
+  cursor: pointer;
+}
+@keyframes mmdHighlightMarch {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+/* Mermaid paints node shapes from an ID-scoped rule inside the SVG
+   (`#mmd-123 .node rect { fill; stroke }`), whose specificity beats any
+   class selector we can write from here — hence !important throughout. */
+.canvas svg .node.mmd-highlight rect,
+.canvas svg .node.mmd-highlight polygon,
+.canvas svg .node.mmd-highlight circle,
+.canvas svg .node.mmd-highlight ellipse,
+.canvas svg .node.mmd-highlight path {
+  fill: var(--accent-soft) !important;
+  stroke: var(--accent) !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 7 5 !important;
+  animation: mmdHighlightMarch 0.7s linear infinite;
+  filter: drop-shadow(0 0 7px var(--accent-glow));
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas svg .node.mmd-highlight rect,
+  .canvas svg .node.mmd-highlight polygon,
+  .canvas svg .node.mmd-highlight circle,
+  .canvas svg .node.mmd-highlight ellipse,
+  .canvas svg .node.mmd-highlight path {
+    animation: none !important;
+  }
 }
 .canvas svg .edgePath .path,
 .canvas svg .flowchart-link {

@@ -1,6 +1,8 @@
 import { state } from "./state.js";
-import { wait } from "./utils.js";
+import { wait, stableKeyFromId } from "./utils.js";
 import { updateNavState } from "./nav.js";
+import { wrapLongLabels } from "./parser.js";
+import { applyHighlights } from "./highlight.js";
 import { syncAnnoTransform, resetAnnotationView } from "./annotate.js";
 import { scheduleSave } from "./persist.js";
 
@@ -8,12 +10,9 @@ import { scheduleSave } from "./persist.js";
    Stable element keys (for detecting which nodes/edges are new
    between one incremental step and the next, since Mermaid
    re-lays out the whole graph from scratch on every render).
+   stableKeyFromId lives in utils.js — the highlight layer keys
+   off it too.
 ========================================================= */
-function stableKeyFromId(id) {
-  if (!id) return null;
-  return id.replace(/-\d+$/, "");
-}
-
 function stableEdgeKey(pathEl) {
   const cls = pathEl.getAttribute("class") || "";
   const ls = /\bLS-([\w:.]+)/.exec(cls);
@@ -122,8 +121,8 @@ export function fitToView() {
    diagram, so the zoom level doesn't shift as steps are incrementally added. */
 export async function ensureTopicFit(topic) {
   if (topic.fitView) return topic.fitView;
-  const fullDef = [topic.header, ...topic.steps.flatMap((s) => s.add)].join(
-    "\n",
+  const fullDef = wrapLongLabels(
+    [topic.header, ...topic.steps.flatMap((s) => s.add)].join("\n"),
   );
   const hidden = document.createElement("div");
   hidden.style.cssText =
@@ -180,6 +179,8 @@ export function renderEmpty() {
     "// nothing to show yet — load a diagram from the left panel";
   document.getElementById("prevBtn").disabled = true;
   document.getElementById("nextBtn").disabled = true;
+  document.getElementById("editBtn").disabled = true;
+  document.getElementById("exportBtn").disabled = true;
   document.getElementById("progressFill").style.width = "0%";
   document.getElementById("progressLabel").textContent = "0/0";
 }
@@ -196,6 +197,8 @@ export async function render(direction) {
   document.getElementById("topicTitle").textContent = topic.title;
   document.getElementById("stepTag").textContent =
     `${state.currentStep} / ${topic.steps.length}`;
+  document.getElementById("editBtn").disabled = false;
+  document.getElementById("exportBtn").disabled = false;
 
   const hasPrevTopic = state.currentTopic > 0;
   const hasNextTopic = state.currentTopic < state.topics.length - 1;
@@ -250,7 +253,9 @@ export async function render(direction) {
 
   const lines = [topic.header];
   for (let i = 0; i < state.currentStep; i++) lines.push(...topic.steps[i].add);
-  const def = lines.join("\n");
+  // Must match the wrapping used by ensureTopicFit, or the precomputed
+  // fit would be sized for differently-shaped nodes than we draw.
+  const def = wrapLongLabels(lines.join("\n"));
 
   const myToken = ++state.renderToken;
   const isStep = direction === "forward" || direction === "back";
@@ -280,6 +285,7 @@ export async function render(direction) {
     canvas.classList.add("reveal-in");
     requestAnimationFrame(() => canvas.classList.remove("reveal-in"));
     if (prevKeys) markNewElements(svgEl, prevKeys);
+    applyHighlights(svgEl, topic);
     if (!state.hasAutoFitThisTopic) {
       if (topic.fitView) state.view = { ...topic.fitView };
       else fitToView();

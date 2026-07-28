@@ -14,10 +14,11 @@ export function makeTopic(title, source) {
     header,
     steps,
     maxSeen: 0,
-    // Annotations are per-diagram and never shared between topics.
+    // Annotations and highlights are per-diagram, never shared between topics.
     annotations: [],
     annoUndo: [],
     annoRedo: [],
+    highlights: [],
   };
 }
 

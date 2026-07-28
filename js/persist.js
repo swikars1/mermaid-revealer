@@ -23,6 +23,7 @@ function serializeTopic(t) {
     source: t.source,
     maxSeen: t.maxSeen || 0,
     annotations: t.annotations || [],
+    highlights: t.highlights || [],
   };
 }
 
@@ -63,6 +64,7 @@ function buildTopicFromSource(title, source) {
     annotations: [],
     annoUndo: [],
     annoRedo: [],
+    highlights: [],
   };
 }
 
@@ -83,6 +85,7 @@ export function loadLibrary() {
       if (!topic) continue;
       topic.maxSeen = Number.isFinite(t.maxSeen) ? t.maxSeen : 0;
       if (Array.isArray(t.annotations)) topic.annotations = t.annotations;
+      if (Array.isArray(t.highlights)) topic.highlights = t.highlights;
       topics.push(topic);
     }
     if (!topics.length) return false;

@@ -2,6 +2,7 @@ import { state } from "./state.js";
 import { escapeHtml } from "./utils.js";
 import { selectTopic, renderEmpty } from "./render.js";
 import { scheduleSave } from "./persist.js";
+import { openEditor } from "./editor.js";
 
 /* =========================================================
    Sidebar + drag reorder
@@ -18,16 +19,25 @@ function createNavItem(t, i) {
       <div class="nav-label">${escapeHtml(t.title)}</div>
       <div class="nav-progress" id="prog-${i}"></div>
     </div>
+    <span class="nav-edit" data-idx="${i}" title="Edit Mermaid source">&#9998;</span>
     <span class="nav-del" data-idx="${i}" title="Remove">&times;</span>`;
 
   el.addEventListener("click", (e) => {
-    if (e.target.closest(".nav-del") || e.target.closest(".drag-handle"))
+    if (
+      e.target.closest(".nav-del") ||
+      e.target.closest(".nav-edit") ||
+      e.target.closest(".drag-handle")
+    )
       return;
     selectTopic(i);
   });
   el.querySelector(".nav-del").addEventListener("click", (e) => {
     e.stopPropagation();
     removeTopic(i);
+  });
+  el.querySelector(".nav-edit").addEventListener("click", (e) => {
+    e.stopPropagation();
+    openEditor(i);
   });
 
   const handle = el.querySelector(".drag-handle");

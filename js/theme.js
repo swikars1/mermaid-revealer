@@ -175,7 +175,12 @@ function applyAccentCss(accentName) {
   });
 }
 
-function initMermaidForTheme(theme) {
+/* Always re-applies the FULL config. mermaid.initialize() merges into
+   its stored config, so passing a partial `flowchart` block elsewhere
+   risks silently dropping the rest of these options — callers that need
+   a one-off tweak (the PNG exporter needs htmlLabels:false) pass it as
+   an override here instead, and restore by calling with none. */
+export function initMermaidForTheme(theme, overrides = {}) {
   mermaid.initialize({
     startOnLoad: false,
     theme: "base",
@@ -187,6 +192,7 @@ function initMermaidForTheme(theme) {
       nodeSpacing: 55,
       rankSpacing: 65,
       diagramPadding: 12,
+      ...(overrides.flowchart || {}),
     },
     sequence: { actorMargin: 60, boxMargin: 10, mirrorActors: false },
     securityLevel: "loose",
